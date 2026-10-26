@@ -1,0 +1,43 @@
+{
+  "last_complete_month": 202606,
+  "coverage": {
+    "ANDREWS": {
+      "first_prod_before_2013 (start not observed)": 8,
+      "gas_well_out_of_scope": 51,
+      "multi_well_lease (lease-level prod not allocable)": 990,
+      "no_oil_production_reported_2012_2026": 48,
+      "no_pdq_completion (permit/DUC/not yet producing or plugged)": 549,
+      "usable": 686
+    },
+    "ECTOR": {
+      "first_prod_before_2013 (start not observed)": 7,
+      "gas_well_out_of_scope": 9,
+      "multi_well_lease (lease-level prod not allocable)": 387,
+      "no_oil_production_reported_2012_2026": 40,
+      "no_pdq_completion (permit/DUC/not yet producing or plugged)": 390,
+      "usable": 126
+    },
+    "MARTIN": {
+      "first_prod_before_2013 (start not observed)": 4,
+      "gas_well_out_of_scope": 0,
+      "multi_well_lease (lease-level prod not allocable)": 4087,
+      "no_oil_production_reported_2012_2026": 202,
+      "no_pdq_completion (permit/DUC/not yet producing or plugged)": 1272,
+      "usable": 1903
+    },
+    "MIDLAND": {
+      "first_prod_before_2013 (start not observed)": 34,
+      "gas_well_out_of_scope": 129,
+      "multi_well_lease (lease-level prod not allocable)": 4791,
+      "no_oil_production_reported_2012_2026": 243,
+      "no_pdq_completion (permit/DUC/not yet producing or plugged)": 1871,
+      "usable": 2128
+    }
+  },
+  "usable_by_county": {
+    "MIDLAND": 2060,
+    "MARTIN": 1866,
+    "ANDREWS": 669,
+    "ECTOR": 121
+  }
+}
