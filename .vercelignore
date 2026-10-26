@@ -1,6 +1,5 @@
-data/
-pipeline/
-tests/
-.pytest_cache/
-scripts/find-demo.ts
-.next/
+/data/
+/pipeline/
+/tests/
+/.pytest_cache/
+/scripts/find-demo.ts

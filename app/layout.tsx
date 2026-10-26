@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
-import AuthBadge from "@/components/AuthBadge";
 
 export const metadata: Metadata = {
   title: "OffsetIQ — Permian offset analysis in seconds",
@@ -16,10 +15,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Link href="/" className="brand">Offset<b>IQ</b></Link>
           <Link href="/analyze" className="l">Analyze</Link>
           <Link href="/data" className="l">Data &amp; model</Link>
-          <Link href="/pricing" className="l">Pricing</Link>
           <span className="sp" />
-          <span className="pill demo" title="Authentication and billing are demo stubs">DEMO</span>
-          <AuthBadge />
+          <span className="pill demo" title="Demo build on public RRC data">DEMO</span>
         </nav>
         {children}
       </body>
