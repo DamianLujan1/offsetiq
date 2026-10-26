@@ -1,0 +1,12 @@
+data/raw/
+node_modules/
+.next/
+__pycache__/
+*.pyc
+.vercel
+.env*
+!.env.example
+.pytest_cache/
+data/processed/*.csv
+!data/processed/early_clusters.csv
+scripts/find-demo.ts
