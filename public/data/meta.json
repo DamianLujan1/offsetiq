@@ -1,0 +1,369 @@
+{
+ "last_complete_month": 202606,
+ "pdq_dump_date": "2026-09-26",
+ "well_layer_source": "RRC digital map well layers (wellNNNs/b/l shapefiles), counties 003/135/317/329",
+ "coverage": {
+  "ANDREWS": {
+   "Usable: single-well lease, oil production attributable": 669,
+   "Excluded: multi-well lease (RRC reports production by lease; not allocable to this well)": 990,
+   "Excluded: no PDQ completion record (permit / DUC / not yet producing / plugged)": 549,
+   "Excluded: gas well (out of scope)": 51,
+   "Excluded: no oil production reported 2012-2026": 48,
+   "Excluded: first production before 2013 (start not observed)": 8,
+   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 17
+  },
+  "ECTOR": {
+   "Usable: single-well lease, oil production attributable": 122,
+   "Excluded: multi-well lease (RRC reports production by lease; not allocable to this well)": 387,
+   "Excluded: no PDQ completion record (permit / DUC / not yet producing / plugged)": 390,
+   "Excluded: gas well (out of scope)": 9,
+   "Excluded: no oil production reported 2012-2026": 40,
+   "Excluded: first production before 2013 (start not observed)": 7,
+   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 4
+  },
+  "MARTIN": {
+   "Usable: single-well lease, oil production attributable": 1866,
+   "Excluded: multi-well lease (RRC reports production by lease; not allocable to this well)": 4087,
+   "Excluded: no PDQ completion record (permit / DUC / not yet producing / plugged)": 1272,
+   "Excluded: no oil production reported 2012-2026": 202,
+   "Excluded: first production before 2013 (start not observed)": 4,
+   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 37
+  },
+  "MIDLAND": {
+   "Usable: single-well lease, oil production attributable": 2059,
+   "Excluded: multi-well lease (RRC reports production by lease; not allocable to this well)": 4791,
+   "Excluded: no PDQ completion record (permit / DUC / not yet producing / plugged)": 1871,
+   "Excluded: gas well (out of scope)": 129,
+   "Excluded: no oil production reported 2012-2026": 243,
+   "Excluded: first production before 2013 (start not observed)": 34,
+   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 69
+  }
+ },
+ "usable_by_county": {
+  "MIDLAND": 2060,
+  "MARTIN": 1866,
+  "ANDREWS": 669,
+  "ECTOR": 121
+ },
+ "dca": {
+  "fitted": 4058,
+  "insufficient": 658,
+  "median_eur_by_county": {
+   "ANDREWS": 412357,
+   "ECTOR": 462301,
+   "MARTIN": 452005,
+   "MIDLAND": 398866
+  },
+  "conf": {
+   "high": 3180,
+   "none": 658,
+   "medium": 654,
+   "low": 224
+  }
+ },
+ "model": {
+  "split_first_prod_ym": 202201,
+  "features": [
+   "lateral_proxy_ft",
+   "mid_lat",
+   "mid_lon",
+   "county_code",
+   "vintage_year",
+   "n_off",
+   "d_nearest_mi",
+   "idw_cum12_per_kft",
+   "idw_early_qi",
+   "idw_early_Di",
+   "idw_early_b",
+   "frac_steep",
+   "frac_mild",
+   "off_cum12_scaled"
+  ],
+  "params": {
+   "n_estimators": 300,
+   "learning_rate": 0.03,
+   "num_leaves": 7,
+   "min_child_samples": 60,
+   "subsample": 0.8,
+   "subsample_freq": 1,
+   "colsample_bytree": 0.7,
+   "reg_lambda": 5.0,
+   "random_state": 42,
+   "verbose": -1
+  },
+  "early_clusters": {
+   "centroids_Di_annual_b": [
+    [
+     6.731,
+     1.3411
+    ],
+    [
+     2.7975,
+     1.2114
+    ],
+    [
+     1.9324,
+     0.2221
+    ]
+   ],
+   "names": [
+    "Steep",
+    "Moderate",
+    "Mild"
+   ]
+  },
+  "targets": {
+   "cum12": {
+    "n_train": 1882,
+    "n_test": 2306,
+    "train_first_prod": [
+     201303,
+     202112
+    ],
+    "test_first_prod": [
+     202201,
+     202507
+    ],
+    "lightgbm_holdout": {
+     "n": 2306,
+     "r2_log": 0.18407738924525208,
+     "mape": 0.465677749434651,
+     "median_ape": 0.2070867952338056,
+     "mae": 47999.76031307858,
+     "within_25pct": 0.572419774501301
+    },
+    "baseline_county_median": {
+     "n": 2306,
+     "r2_log": -0.0809721658754019,
+     "mape": 0.5476595066048059,
+     "median_ape": 0.2672045450550803,
+     "mae": 59745.20381613183,
+     "within_25pct": 0.46877710320901994
+    },
+    "baseline_offset_average": {
+     "n": 2306,
+     "r2_log": 0.03495878229038485,
+     "mape": 0.5397132021726558,
+     "median_ape": 0.24353723390388704,
+     "mae": 57167.85910547347,
+     "within_25pct": 0.5147441457068517
+    },
+    "holdout_with_offsets_only": {
+     "n": 2281,
+     "r2_log": 0.18872193183031927,
+     "mape": 0.46425183709579243,
+     "median_ape": 0.20603686186867287,
+     "mae": 47560.74773090077,
+     "within_25pct": 0.5765015344147304
+    },
+    "n_final": 4188,
+    "feature_importance_gain": {
+     "lateral_proxy_ft": 0.479,
+     "mid_lon": 0.1763,
+     "off_cum12_scaled": 0.107,
+     "vintage_year": 0.0366,
+     "idw_early_qi": 0.0309,
+     "mid_lat": 0.0298,
+     "idw_early_Di": 0.0297,
+     "d_nearest_mi": 0.0295,
+     "idw_cum12_per_kft": 0.029,
+     "idw_early_b": 0.0131,
+     "n_off": 0.0129,
+     "frac_steep": 0.0126,
+     "county_code": 0.0095,
+     "frac_mild": 0.004
+    }
+   },
+   "cum12_p10": {
+    "n_train": 1882,
+    "n_test": 2306,
+    "train_first_prod": [
+     201303,
+     202112
+    ],
+    "test_first_prod": [
+     202201,
+     202507
+    ],
+    "holdout_coverage": 0.8317432784041631,
+    "n_final": 4188,
+    "feature_importance_gain": {
+     "lateral_proxy_ft": 0.2736,
+     "mid_lon": 0.2295,
+     "off_cum12_scaled": 0.0712,
+     "mid_lat": 0.0673,
+     "d_nearest_mi": 0.0649,
+     "idw_early_qi": 0.0601,
+     "idw_cum12_per_kft": 0.0421,
+     "vintage_year": 0.0354,
+     "n_off": 0.0329,
+     "idw_early_Di": 0.0329,
+     "frac_steep": 0.0276,
+     "idw_early_b": 0.0273,
+     "frac_mild": 0.0183,
+     "county_code": 0.017
+    }
+   },
+   "cum12_p90": {
+    "n_train": 1882,
+    "n_test": 2306,
+    "train_first_prod": [
+     201303,
+     202112
+    ],
+    "test_first_prod": [
+     202201,
+     202507
+    ],
+    "holdout_coverage": 0.8412836079791848,
+    "n_final": 4188,
+    "feature_importance_gain": {
+     "lateral_proxy_ft": 0.2507,
+     "off_cum12_scaled": 0.1474,
+     "mid_lon": 0.0969,
+     "mid_lat": 0.0813,
+     "d_nearest_mi": 0.0701,
+     "idw_early_qi": 0.0623,
+     "idw_early_Di": 0.0549,
+     "idw_cum12_per_kft": 0.0523,
+     "frac_steep": 0.0489,
+     "frac_mild": 0.0372,
+     "n_off": 0.0351,
+     "idw_early_b": 0.0314,
+     "vintage_year": 0.0255,
+     "county_code": 0.0059
+    }
+   },
+   "eur": {
+    "n_train": 1718,
+    "n_test": 1462,
+    "train_first_prod": [
+     201303,
+     202112
+    ],
+    "test_first_prod": [
+     202201,
+     202407
+    ],
+    "lightgbm_holdout": {
+     "n": 1462,
+     "r2_log": 0.0616047460536151,
+     "mape": 0.4526870687591326,
+     "median_ape": 0.31595091734331904,
+     "mae": 190600.09219399403,
+     "within_25pct": 0.39808481532147744
+    },
+    "baseline_county_median": {
+     "n": 1462,
+     "r2_log": -0.014688503561421928,
+     "mape": 0.43023922930550773,
+     "median_ape": 0.30779649281755933,
+     "mae": 191028.1936793171,
+     "within_25pct": 0.43091655266757867
+    },
+    "baseline_offset_average": {
+     "n": 1462,
+     "r2_log": -0.21472695554103294,
+     "mape": 0.5693832585143872,
+     "median_ape": 0.37891063836478167,
+     "mae": 223479.73654242046,
+     "within_25pct": 0.34610123119015046
+    },
+    "holdout_with_offsets_only": {
+     "n": 1441,
+     "r2_log": 0.04615872810969712,
+     "mape": 0.4495896302381403,
+     "median_ape": 0.31321684776235326,
+     "mae": 188051.83695530525,
+     "within_25pct": 0.40111034004163776
+    },
+    "n_final": 3180,
+    "feature_importance_gain": {
+     "lateral_proxy_ft": 0.4266,
+     "mid_lon": 0.1337,
+     "mid_lat": 0.1019,
+     "off_cum12_scaled": 0.0746,
+     "idw_cum12_per_kft": 0.0453,
+     "idw_early_Di": 0.0364,
+     "d_nearest_mi": 0.0318,
+     "frac_mild": 0.0307,
+     "idw_early_b": 0.0275,
+     "vintage_year": 0.0244,
+     "n_off": 0.0219,
+     "idw_early_qi": 0.0188,
+     "frac_steep": 0.0169,
+     "county_code": 0.0096
+    }
+   },
+   "eur_p10": {
+    "n_train": 1718,
+    "n_test": 1462,
+    "train_first_prod": [
+     201303,
+     202112
+    ],
+    "test_first_prod": [
+     202201,
+     202407
+    ],
+    "holdout_coverage": 0.8166894664842681,
+    "n_final": 3180,
+    "feature_importance_gain": {
+     "lateral_proxy_ft": 0.3051,
+     "mid_lon": 0.1241,
+     "mid_lat": 0.1147,
+     "off_cum12_scaled": 0.0716,
+     "d_nearest_mi": 0.0645,
+     "idw_early_b": 0.0542,
+     "idw_cum12_per_kft": 0.047,
+     "idw_early_qi": 0.0439,
+     "idw_early_Di": 0.0417,
+     "vintage_year": 0.0351,
+     "frac_steep": 0.0315,
+     "frac_mild": 0.031,
+     "n_off": 0.0248,
+     "county_code": 0.0108
+    }
+   },
+   "eur_p90": {
+    "n_train": 1718,
+    "n_test": 1462,
+    "train_first_prod": [
+     201303,
+     202112
+    ],
+    "test_first_prod": [
+     202201,
+     202407
+    ],
+    "holdout_coverage": 0.8645690834473324,
+    "n_final": 3180,
+    "feature_importance_gain": {
+     "lateral_proxy_ft": 0.1878,
+     "mid_lat": 0.1417,
+     "mid_lon": 0.1321,
+     "off_cum12_scaled": 0.0862,
+     "idw_cum12_per_kft": 0.0726,
+     "d_nearest_mi": 0.0658,
+     "idw_early_b": 0.0619,
+     "frac_mild": 0.0565,
+     "idw_early_Di": 0.0541,
+     "idw_early_qi": 0.0451,
+     "n_off": 0.0446,
+     "frac_steep": 0.0257,
+     "vintage_year": 0.0232,
+     "county_code": 0.0027
+    }
+   }
+  }
+ },
+ "horizontals_by_code": {
+  "Usable: single-well lease, oil production attributable": 4716,
+  "Excluded: multi-well lease (RRC reports production by lease; not allocable to this well)": 10255,
+  "Excluded: no PDQ completion record (permit / DUC / not yet producing / plugged)": 4082,
+  "Excluded: gas well (out of scope)": 189,
+  "Excluded: no oil production reported 2012-2026": 533,
+  "Excluded: first production before 2013 (start not observed)": 53,
+  "Excluded: RRC well layer has no surface location (lateral cannot be located)": 127
+ }
+}
