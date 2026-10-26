@@ -24,8 +24,8 @@ input,select{background:#0c1424;border:1px solid var(--line);color:var(--txt);bo
 label{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;display:block;margin:0 0 3px}
 .app{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 53px)}
 .side{border-right:1px solid var(--line);overflow:auto;padding:14px;background:#0d1526}
-.main{display:grid;grid-template-rows:55% 45%;min-width:0}
-.mapbox{position:relative;min-height:0}.tablebox{overflow:auto;border-top:1px solid var(--line);min-height:0}
+.main{display:grid;grid-template-rows:minmax(360px,55%) minmax(0,45%);min-width:0;min-height:0}
+.mapbox{position:relative;min-height:360px}.tablebox{overflow:auto;border-top:1px solid var(--line);min-height:0}
 #map{position:absolute;inset:0}
 .tabs{display:flex;gap:4px;margin-bottom:10px}.tabs button{flex:1;background:#0c1424;border:1px solid var(--line);color:var(--mut);padding:7px;border-radius:7px;cursor:pointer;font-size:12px}
 .tabs button.on{background:var(--panel2);color:var(--txt);border-color:#3a4d78}

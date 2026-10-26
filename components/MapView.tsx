@@ -28,7 +28,12 @@ export default function MapView({ W, H, target, radiusMi, offsetIdx, selected, o
       const Lf = (mod as unknown as { default: typeof LT }).default ?? (mod as unknown as typeof LT);
       L.current = Lf;
       const m = Lf.map(el.current, { preferCanvas: true, zoomControl: true }).setView([32.0, -102.15], 9);
-      const dark = Lf.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { attribution: "© OpenStreetMap contributors © CARTO", maxZoom: 19 });
+      // Keyless public basemaps only (no Mapbox/Google/CARTO tokens). CARTO now watermarks "API key required", so it is not used.
+      const dark = Lf.layerGroup([
+        Lf.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", { attribution: "Basemap © Esri, HERE, Garmin, © OpenStreetMap contributors", maxZoom: 16 }),
+        Lf.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", { maxZoom: 16 }),
+      ]);
+      const osm = Lf.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap contributors", maxZoom: 19 });
       const sat = Lf.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { attribution: "Imagery © Esri", maxZoom: 19 });
       dark.addTo(m);
       const rend = Lf.canvas({ padding: 0.5 });
@@ -45,12 +50,14 @@ export default function MapView({ W, H, target, radiusMi, offsetIdx, selected, o
         c.addTo(usable);
       }
       gaps.addTo(m); usable.addTo(m);
-      Lf.control.layers({ Dark: dark, Satellite: sat }, { "Attributable horizontals (used)": usable, "Coverage gaps (not attributable)": gaps }, { position: "topleft" }).addTo(m);
+      Lf.control.layers({ "Dark (Esri)": dark, "Streets (OpenStreetMap)": osm, "Satellite (Esri)": sat }, { "Attributable horizontals (used)": usable, "Coverage gaps (not attributable)": gaps }, { position: "topleft" }).addTo(m);
       dyn.current = Lf.layerGroup().addTo(m);
       m.on("click", (e: LT.LeafletMouseEvent) => cb.current.onPick(e.latlng.lat, e.latlng.lng));
       map.current = m;
       setReady(true);
       setTimeout(() => m.invalidateSize(), 50);
+      setTimeout(() => m.invalidateSize(), 500);
+      window.addEventListener("resize", () => m.invalidateSize());
     });
     return () => { alive = false; };
   }, [W, H]);
