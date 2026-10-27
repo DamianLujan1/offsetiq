@@ -1,0 +1,16 @@
+# The screening agent service (agent/), as deployed on Vercel with the FastAPI preset: Vercel
+# installs these dependencies and serves agent.server:app. Not an installable package.
+# Local runs use agent/requirements.txt (adds uvicorn and the test tools); the offline data
+# pipeline (pipeline/) has its own, heavier dependency list in the README.
+[project]
+name = "offsetiq-agent"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.0",
+    "fastapi>=0.115",
+    "pydantic>=2.7",
+]
+
+[tool.vercel]
+entrypoint = "agent.server:app"

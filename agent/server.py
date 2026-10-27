@@ -1,8 +1,12 @@
 """HTTP front for the screening agent: POST /screen streams the loop's events as NDJSON.
 
 Run:  python -m agent.server [--host 127.0.0.1] [--port 8765]
-The Next.js app proxies /api/screen here (OFFSETIQ_AGENT_URL), so this service
-never needs to be public.
+The Next.js app proxies /api/screen here (OFFSETIQ_AGENT_URL). When this service is
+reachable from the internet, set OFFSETIQ_AGENT_TOKEN on both sides: /screen then
+requires "Authorization: Bearer <token>", so only the app's proxy can run screens.
+That is a key between two services, not user authentication.
+
+On Vercel (FastAPI preset) the entrypoint is agent.server:app, set in pyproject.toml.
 
 Privacy: a request is processed in memory and dropped when its stream ends. Nothing
 is stored, and nothing about a request is logged: the access log is off (it would
@@ -12,13 +16,15 @@ never messages or source lines that could carry a prompt or coordinates.
 from __future__ import annotations
 
 import argparse
+import hmac
 import json
 import logging
 import os
+import time
 import traceback
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -62,19 +68,37 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="OffsetIQ screening agent", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 
+# A fixed request with no user data: two locations in coverage and one outside it. Its numbers are pinned
+# by tests/test_agent_loop.py, so /health?deep=1 shows a deployment computes exactly what the tests expect.
+DEEP_CHECK = "screen 31.86,-102.20 and 32.30,-101.90 and 33.20,-101.20"
+
+
+def require_token(authorization: str | None = Header(default=None)) -> None:
+    token = os.environ.get("OFFSETIQ_AGENT_TOKEN", "")
+    if token and not hmac.compare_digest((authorization or "").encode(), f"Bearer {token}".encode()):
+        raise HTTPException(status_code=401, detail="Missing or invalid service token.")
+
 
 @app.get("/health")
-def health() -> dict:
+async def health(deep: bool = False) -> dict:
     snap = load_snapshot()
-    return {"ok": True, "wells": snap.n, "pdq_dump_date": snap.meta["pdq_dump_date"],
-            "last_complete_month": snap.meta["last_complete_month"], "workers": default_workers()}
+    out = {"ok": True, "wells": snap.n, "pdq_dump_date": snap.meta["pdq_dump_date"],
+           "last_complete_month": snap.meta["last_complete_month"], "workers": default_workers()}
+    if deep:
+        t0 = time.perf_counter()
+        p = [ev async for ev in run(DEEP_CHECK, None, workers=0)][-1]
+        ok = p.get("type") == "proposal" and p["ranked_total"] == 2 and p["unranked"]["outside_coverage"] == 1
+        out["deep"] = {"ok": ok, "ms": round((time.perf_counter() - t0) * 1000),
+                       "cum12_p50": [r["cum12"]["p50"] for r in p.get("ranked", [])]}
+        out["ok"] = ok
+    return out
 
 
 def _json(o) -> str:
     return json.dumps(o, separators=(",", ":"), default=lambda v: v.item() if hasattr(v, "item") else str(v)) + "\n"
 
 
-@app.post("/screen")
+@app.post("/screen", dependencies=[Depends(require_token)])
 async def screen(req: ScreenRequest) -> StreamingResponse:
     async def events():
         try:

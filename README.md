@@ -41,7 +41,7 @@ pip install -r agent/requirements.txt
 python3 -m agent.server     # the agent, on 127.0.0.1:8765 (or: npm run agent)
 npm run dev                 # /screen calls it through /api/screen
 ```
-In production, set `OFFSETIQ_AGENT_URL` to wherever the agent service runs. Without it, Screen mode says it is not connected, and Analyze is unaffected.
+In production, set `OFFSETIQ_AGENT_URL` to wherever the agent runs, and the same `OFFSETIQ_AGENT_TOKEN` on both the app and the agent. Without the URL, Screen mode says it is not connected, and Analyze is unaffected. The Vercel setup (a second project, `offsetiq-agent`, from this repository) is described in `docs/SCREENING_AGENT.md`.
 
 Tests:
 - `python3 -m pytest -q` covers the agent: intent phrasings, grids, ranking stability, multi-well coverage gaps, Python/TypeScript parity, and the loop and server.

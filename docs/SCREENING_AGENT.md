@@ -159,7 +159,7 @@ never depends on input order or on which task finished first.
 **Rationale.** Each location's rationale is filled only from computed numbers. Its headline follows
 the brief, with the primary sort key added: *"Rank #3: 4 nearby offsets within 1 mile, median 12-mo
 oil 38k bbl, 12-mo oil P50 41k bbl, EUR P50 210k bbl, 2 multi-well gaps excluded."* Details give:
-- P10–P90;
+- the P90 (low case) to P10 (high case) range, in the PRMS convention the Analyze page uses;
 - the nearest offset;
 - the wells feeding the model;
 - the gaps, and why they carry no volumes;
@@ -213,15 +213,30 @@ the agent only counts it. `tests/test_agent_coverage_gaps.py` checks three thing
 - **No autonomous action.** The agent never exports, saves or acts. Every export is a browser
   action after approval.
 
-### Deploying
+### Deploying (Vercel)
 
-The agent is a separate Python service (`python -m agent.server`, deps in
-`agent/requirements.txt`). It is not deployed to Vercel (`.vercelignore`), so adding it cannot break
-the existing build. Set `OFFSETIQ_AGENT_URL` on the Next.js deployment to wherever it runs: any
-container host, ideally private, since only the proxy calls it. Without the variable, Screen mode
-reports that it is not connected and Analyze keeps working. `next dev` defaults to
-`http://127.0.0.1:8765`. The proxy route allows 60 s, while a full county runs in about 1–2 s on 4
-cores.
+Two Vercel projects deploy from this repository:
+
+- **`offsetiq`** is the Next.js app, unchanged.
+- **`offsetiq-agent`** is the screening agent: the FastAPI preset at the repository root, with the
+  entrypoint `agent.server:app` and its dependencies in `pyproject.toml`. Its Ignored Build Step skips
+  builds unless `agent/`, `pipeline/`, `public/data/` or `pyproject.toml` changed.
+
+| Project | Variable | Value |
+|---|---|---|
+| `offsetiq-agent` | `OFFSETIQ_AGENT_TOKEN` | Shared secret (sensitive). `/screen` then accepts only callers that send it. |
+| `offsetiq-agent` | `OFFSETIQ_AGENT_WORKERS` | `0`: Vercel functions can't run process pools, so screening runs in-process. |
+| `offsetiq` | `OFFSETIQ_AGENT_URL` | The agent's production URL. |
+| `offsetiq` | `OFFSETIQ_AGENT_TOKEN` | The same secret. |
+
+The token is a key between the two services, not user authentication. Without `OFFSETIQ_AGENT_URL`,
+Screen mode reports that it is not connected and Analyze keeps working. `next dev` defaults to
+`http://127.0.0.1:8765`, and a local agent with no token set accepts any caller.
+
+`GET /health?deep=1` on the agent runs a fixed three-location screen (no user data) and returns its
+P50s. They must equal the values pinned in `tests/test_agent_loop.py`, which shows a deployment
+computes exactly what the tests do. Elsewhere, the agent runs anywhere `python -m agent.server`
+runs. With several cores it uses worker processes; a full county takes about 1–2 s on 4 cores.
 
 ### Event protocol (NDJSON, one object per line)
 

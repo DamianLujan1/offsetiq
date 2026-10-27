@@ -123,3 +123,33 @@ def test_server_internal_error_ends_stream_with_error_event(client, monkeypatch,
         evs = [json.loads(line) for line in r.iter_lines() if line]
     assert evs[-1]["type"] == "error"
     assert "RuntimeError" in caplog.text and not re.search(r"secret|31\.9", caplog.text)  # nothing about the request is logged
+
+
+def test_service_token_is_enforced_only_when_configured(client, monkeypatch):
+    body = {"prompt": "screen 31.95,-102.05"}
+    assert client.post("/screen", json=body).status_code == 200            # unset: local development
+    monkeypatch.setenv("OFFSETIQ_AGENT_TOKEN", "s3cret-token")
+    assert client.post("/screen", json=body).status_code == 401
+    assert client.post("/screen", json=body, headers={"authorization": "Bearer wrong"}).status_code == 401
+    assert client.post("/screen", json={"prompt": ""}).status_code == 401   # checked before the body is read
+    ok = client.post("/screen", json=body, headers={"authorization": "Bearer s3cret-token"})
+    assert ok.status_code == 200 and ok.text.strip().splitlines()[-1].startswith('{"type":"proposal"')
+    assert client.get("/health").status_code == 200                         # health stays open
+
+
+def test_deep_health_pins_the_numbers_a_deployment_must_reproduce(client):
+    h = client.get("/health", params={"deep": 1}).json()
+    assert h["ok"] and h["deep"]["ok"]
+    assert h["deep"]["cum12_p50"] == pytest.approx([141711.83616015807, 133937.85897050393], rel=1e-9)
+
+
+def test_runs_in_process_when_worker_processes_are_unavailable(monkeypatch):
+    def no_pool(*a, **k):
+        raise OSError(38, "Function not implemented")  # what a sandbox without POSIX semaphores raises
+    monkeypatch.setattr(L, "ProcessPoolExecutor", no_pool)
+    monkeypatch.setattr(L, "_pool_unavailable", False)
+    L.shutdown_pool()
+    probe = {}
+    evs = events("rank Ector County at 640-acre spacing", None, workers=4, probe=probe)
+    assert evs[-1]["type"] == "proposal" and probe["workers"] == 1
+    assert L.worker_pool(4) is None   # remembered: later runs go straight to in-process

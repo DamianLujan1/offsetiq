@@ -56,28 +56,35 @@ def default_workers() -> int:
 
 _pool: ProcessPoolExecutor | None = None
 _pool_size = 0
+_pool_unavailable = False   # this platform cannot run worker processes (e.g. no POSIX semaphores)
 _pool_lock = threading.Lock()
 
 
 def worker_pool(workers: int) -> ProcessPoolExecutor | None:
-    """Shared process pool (None = screen in-process). Workers load the public snapshot once."""
-    global _pool, _pool_size
-    if workers <= 1:
+    """Shared process pool (None = screen in-process). Workers load the public snapshot once.
+    Serverless sandboxes often cannot create one; screening then runs in-process instead of failing."""
+    global _pool, _pool_size, _pool_unavailable
+    if workers <= 1 or _pool_unavailable:
         return None
     with _pool_lock:
         if _pool is None:
-            _pool = ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn"),
-                                        initializer=load_snapshot)
+            try:
+                _pool = ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn"),
+                                            initializer=load_snapshot)
+            except (OSError, ImportError, NotImplementedError):
+                _pool_unavailable = True
+                return None
             _pool_size = workers
         return _pool
 
 
-def shutdown_pool() -> None:
-    global _pool
+def shutdown_pool(unavailable: bool = False) -> None:
+    global _pool, _pool_unavailable
     with _pool_lock:
         if _pool is not None:
             _pool.shutdown(wait=False, cancel_futures=True)
             _pool = None
+        _pool_unavailable = _pool_unavailable or unavailable
 
 
 def screen_batch(points: list[tuple[float, float]], lateral_ft: float, radius_mi: float, flt: Filters,
@@ -183,18 +190,17 @@ async def run(prompt: str, context: dict | None = None, *, workers: int | None =
     results: list = [None] * len(pts)
     reach = max(COVERAGE_MI, intent.radius_mi)
     pool = worker_pool(default_workers() if workers is None else workers)
-    nworkers = _pool_size if pool else 1  # what actually ran: the shared pool keeps the size it was created with
     loop = asyncio.get_running_loop()
     sem = asyncio.Semaphore(max_in_flight)
     gauge = {"now": 0, "peak": 0, "tiles": 0, "reuse": 0}
 
-    async def one(b: list[int]) -> int:
+    async def one(b: list[int], ex: ProcessPoolExecutor | None) -> int:
         async with sem:
             gauge["now"] += 1
             gauge["peak"] = max(gauge["peak"], gauge["now"])
             try:
                 args = ([pts[i] for i in b], intent.lateral_ft, intent.radius_mi, intent.filters, reach)
-                out, tl, th = (await loop.run_in_executor(pool, screen_batch, *args)) if pool else screen_batch(*args)
+                out, tl, th = (await loop.run_in_executor(ex, screen_batch, *args)) if ex else screen_batch(*args)
             finally:
                 gauge["now"] -= 1
             for i, s in zip(b, out):
@@ -204,22 +210,25 @@ async def run(prompt: str, context: dict | None = None, *, workers: int | None =
             return len(b)
 
     t1 = time.perf_counter()
-    tasks = [asyncio.create_task(one(b)) for b in batches]
-    try:
-        done, last = 0, 0.0
-        for fut in asyncio.as_completed(tasks):
-            done += await fut
-            now = time.perf_counter()
-            if done == len(pts) or now - last > 0.2:
-                last = now
-                yield {"type": "progress", "done": done, "total": len(pts)}
-    except BrokenProcessPool:
-        shutdown_pool()
-        yield {"type": "error", "message": "A screening worker stopped unexpectedly. Nothing was saved; please run the request again."}
-        return
-    finally:
-        for t in tasks:
-            t.cancel()
+    fallback = ""
+    for ex in ([pool, None] if pool else [None]):
+        nworkers = _pool_size if ex else 1  # what actually ran: the shared pool keeps the size it was created with
+        tasks = [asyncio.create_task(one(b, ex)) for b in batches]
+        try:
+            done, last = 0, 0.0
+            for fut in asyncio.as_completed(tasks):
+                done += await fut
+                now = time.perf_counter()
+                if done == len(pts) or now - last > 0.2:
+                    last = now
+                    yield {"type": "progress", "done": done, "total": len(pts)}
+            break
+        except BrokenProcessPool:  # workers cannot run here; screen this run (and later ones) in-process
+            shutdown_pool(unavailable=True)
+            fallback = " Worker processes were unavailable, so this run screened in-process."
+        finally:
+            for t in tasks:
+                t.cancel()
     screen_s = time.perf_counter() - t1
     if probe is not None:
         probe.update(peak_in_flight=gauge["peak"], unique=len(pts), batches=len(batches), workers=nworkers)
@@ -228,7 +237,8 @@ async def run(prompt: str, context: dict | None = None, *, workers: int | None =
                       f"{plural(nworkers, 'worker process')}, at most {max_in_flight} batches in flight. Offsets come "
                       f"from the public RRC snapshot already in memory, so nothing is refetched; each ~1 mi tile's neighbourhood "
                       f"was looked up {gauge['tiles']:,} times and reused {gauge['reuse']:,} times by neighbouring candidates."
-                      + (f" {len(cands) - len(pts):,} duplicate locations screened once." if len(cands) > len(pts) else ""))}
+                      + (f" {len(cands) - len(pts):,} duplicate locations screened once." if len(cands) > len(pts) else "")
+                      + fallback)}
 
     # ---- rank & explain ------------------------------------------------------------------------------------
     pairs = [(c, results[slot[i]]) for i, c in enumerate(cands)]

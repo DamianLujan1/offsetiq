@@ -1,5 +1,5 @@
-# Screening agent service (python -m agent.server). The offline pipeline's own
-# dependencies are listed in the README; the agent needs only these.
+# Screening agent service, local runs (python -m agent.server) and tests. Keep the runtime
+# packages in step with pyproject.toml, which is what Vercel installs.
 numpy>=2.0
 fastapi>=0.115
 uvicorn>=0.30
