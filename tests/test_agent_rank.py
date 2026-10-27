@@ -19,8 +19,8 @@ SQ2 = [[31.80, -102.00], [31.80, -101.98], [31.815, -101.98], [31.815, -102.00]]
 
 def fake(id_, p50, eur=400e3, n_off=10, lat=31.9, lon=-102.1, in_cov=True):
     s = Screen(lat=lat, lon=lon, lateral_ft=10000, radius_mi=1.0, county="MIDLAND", county_dist_mi=0.1,
-               in_coverage=in_cov, features={}, cum12={"p10": p50 * 0.8, "p50": p50, "p90": p50 * 1.3},
-               eur={"p10": eur * 0.6, "p50": eur, "p90": eur * 1.6}, model_offsets=n_off, offsets=[], gaps={},
+               in_coverage=in_cov, features={}, cum12={"p90": p50 * 0.8, "p50": p50, "p10": p50 * 1.3},
+               eur={"p90": eur * 0.6, "p50": eur, "p10": eur * 1.6}, model_offsets=n_off, offsets=[], gaps={},
                analog_eur=None)
     return Candidate(id=id_, region="A", lat=lat, lon=lon), s
 

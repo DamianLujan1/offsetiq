@@ -89,7 +89,7 @@ async function main() {
   check(await decodeReport("z.not-base64!!") === null && await decodeReport("x.abc") === null && await decodeReport("") === null, "garbage links are rejected");
   check(await bad({ ...rep, v: 2 }) === null, "unknown report version is rejected");
   check(await bad({ ...rep, rows: [{ ...rep.rows[0], lat: "31.9" }] }) === null, "non-numeric coordinates are rejected");
-  check(await bad({ ...rep, rows: [{ ...rep.rows[0], cum12: { p10: 1, p50: null, p90: 3 } }] }) === null, "missing forecast numbers are rejected");
+  check(await bad({ ...rep, rows: [{ ...rep.rows[0], cum12: { p90: 1, p50: null, p10: 3 } }] }) === null, "missing forecast numbers are rejected");
   check(await bad({ ...rep, filters: { ...rep.filters, min_lat_ft: "javascript:alert(1)" } }) === null, "non-numeric filters are rejected");
   check(await decodeReport("j." + "A".repeat(400_001)) === null, "oversized links are rejected");
   const href = analyzeHref(31.9, -102.1, 10000, 1, { min_lat_ft: null, max_lat_ft: null, operator: '"><script>', min_first_ym: null, max_first_ym: null });

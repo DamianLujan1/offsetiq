@@ -42,12 +42,12 @@ function PrintReport({ rep }: { rep: Report | null }) {
       <div className="small">Request: “{rep.prompt}”</div>
       <div className="small">{rep.plan}</div>
       <div className="small">Approved by the operator {rep.approvedAt.replace("T", " ").slice(0, 16)} UTC · {rep.rows.length} of {rep.proposed} proposed locations kept{rep.edited ? " · order or selection edited by the operator" : ""}</div>
-      <div className="small">Texas RRC public data (PDQ dump {rep.data.pdq_dump_date}; production through {fmtYm(rep.data.last_complete_month)}). Model median error on held-out 2022+ wells: {Math.round(rep.model.cum12_median_ape * 100)}% (12-mo oil), {Math.round(rep.model.eur_median_ape * 100)}% (EUR). Multi-well-lease wells are counted as coverage gaps, never given volumes. Screening estimate, not a reserves report.</div>
+      <div className="small">Texas RRC public data (PDQ dump {rep.data.pdq_dump_date}; production through {fmtYm(rep.data.last_complete_month)}). P90 = low case, P10 = high case (PRMS). Model median error on held-out 2022+ wells: {Math.round(rep.model.cum12_median_ape * 100)}% (12-mo oil), {Math.round(rep.model.eur_median_ape * 100)}% (EUR). Multi-well-lease wells are counted as coverage gaps, never given volumes. Screening estimate, not a reserves report.</div>
       <table style={{ marginTop: 8 }}>
-        <thead><tr><th>#</th><th className="l">Location</th><th>12-mo oil P10 / P50 / P90</th><th>EUR P50</th><th className="l">Rationale (agent)</th></tr></thead>
+        <thead><tr><th>#</th><th className="l">Location</th><th>12-mo oil P90 / P50 / P10</th><th>EUR P50</th><th className="l">Rationale (agent)</th></tr></thead>
         <tbody>{rep.rows.map((r) => (
           <tr key={r.id}><td>{r.rank}</td><td className="l">{r.id}<br />{r.region}<br />{r.lat.toFixed(5)}, {r.lon.toFixed(5)}</td>
-            <td>{fmtK(r.cum12.p10)} / <b>{fmtK(r.cum12.p50)}</b> / {fmtK(r.cum12.p90)}</td><td>{fmtK(r.eur.p50)}</td>
+            <td>{fmtK(r.cum12.p90)} / <b>{fmtK(r.cum12.p50)}</b> / {fmtK(r.cum12.p10)}</td><td>{fmtK(r.eur.p50)}</td>
             <td className="rat"><b>{r.headline}</b><ul>{r.details.map((d, i) => <li key={i}>{d}</li>)}</ul><div className="w">{r.why}{r.agentRank !== r.rank ? ` (agent rank #${r.agentRank}; re-ranked by the operator)` : ""}</div></td></tr>
         ))}</tbody>
       </table>
@@ -324,11 +324,11 @@ export default function ScreenAgent() {
           {shared ? (<>
             <div className="toolbar small"><b>{shared.rows.length} approved locations</b><span className="mut">read-only shared report · click a row for its full rationale</span></div>
             <table>
-              <thead><tr><th>Rank</th><th className="l">Location</th><th className="l">Area</th><th>12-mo oil P50 (P10–P90)</th><th>EUR P50</th><th>Offsets ≤ {shared.radiusMi} mi</th><th>Model wells</th><th>Multi-well gaps</th><th className="l">Rationale</th></tr></thead>
+              <thead><tr><th>Rank</th><th className="l">Location</th><th className="l">Area</th><th title="PRMS: P90 = low case, P10 = high case">12-mo oil P50 (P90–P10)</th><th>EUR P50</th><th>Offsets ≤ {shared.radiusMi} mi</th><th>Model wells</th><th>Multi-well gaps</th><th className="l">Rationale</th></tr></thead>
               <tbody>{shared.rows.map((r) => (
                 <tr key={r.id} className={r.id === selected ? "sel" : ""} onClick={() => setSelected(r.id)}>
                   <td>{r.rank}{r.agentRank !== r.rank && <div className="mut" style={{ fontSize: 10 }}>agent #{r.agentRank}</div>}</td><td className="l">{r.id}</td><td className="l">{r.region}</td>
-                  <td><b>{fmtK(r.cum12.p50)}</b> <span className="mut">({fmtK(r.cum12.p10)}–{fmtK(r.cum12.p90)})</span></td><td>{fmtK(r.eur.p50)}</td>
+                  <td><b>{fmtK(r.cum12.p50)}</b> <span className="mut">({fmtK(r.cum12.p90)}–{fmtK(r.cum12.p10)})</span></td><td>{fmtK(r.eur.p50)}</td>
                   <td>{r.offsets}</td><td>{r.modelOffsets}</td><td>{r.multiWell}</td>
                   <td className="rat">{r.headline}<div className="w">{r.why}</div></td>
                 </tr>))}</tbody>
@@ -337,7 +337,7 @@ export default function ScreenAgent() {
             <div className="toolbar small"><b>{proposal.ranked.length} proposed</b><span className="mut">of {fmtInt(proposal.ranked_total)} ranked · ☐ to exclude · ▲▼ to re-rank · click a row for its full rationale</span>
               <span style={{ flex: 1 }} /><button className="btn sm ghost" disabled={!isEdited} onClick={() => setR((r) => resetOrder({ ...r, excluded: [] }, proposal))}>Reset to agent list</button></div>
             <table>
-              <thead><tr><th>Keep</th><th>#</th><th>Move</th><th className="l">Location</th><th className="l">Area</th><th>12-mo oil P50 (P10–P90)</th><th>EUR P50</th>
+              <thead><tr><th>Keep</th><th>#</th><th>Move</th><th className="l">Location</th><th className="l">Area</th><th title="PRMS: P90 = low case, P10 = high case">12-mo oil P50 (P90–P10)</th><th>EUR P50</th>
                 <th>Offsets ≤ {proposal.intent.radius_mi} mi</th><th>Model wells</th><th>Multi-well gaps</th><th className="l">Evidence</th><th className="l">Rationale (agent)</th><th className="l">Analyze</th></tr></thead>
               <tbody>{review.order.map((id) => {
                 const r = rowsById.get(id)!, out = review.excluded.includes(id), yr = yourRank.get(id);
@@ -350,7 +350,7 @@ export default function ScreenAgent() {
                       <button aria-label={`Move ${id} down`} onClick={() => setR((v) => move(v, id, 1))}>▼</button></td>
                     <td className="l">{id}<div className="mut" style={{ fontSize: 10 }}>{r.lat.toFixed(4)}, {r.lon.toFixed(4)}</div></td>
                     <td className="l">{r.region}</td>
-                    <td><b>{fmtK(r.cum12.p50)}</b> <span className="mut">({fmtK(r.cum12.p10)}–{fmtK(r.cum12.p90)})</span></td>
+                    <td><b>{fmtK(r.cum12.p50)}</b> <span className="mut">({fmtK(r.cum12.p90)}–{fmtK(r.cum12.p10)})</span></td>
                     <td>{fmtK(r.eur.p50)}</td>
                     <td>{r.evidence.n}{r.evidence.median_cum12 !== null && <div className="mut" style={{ fontSize: 10 }}>median {fmtK(r.evidence.median_cum12)}</div>}</td>
                     <td>{r.model_offsets}</td><td>{r.gaps.multi_well}</td>

@@ -16,6 +16,10 @@ const W: Wells = load("wells.json"), H: Horizontals = load("horizontals.json"), 
 let seed = 20261027;
 const rand = () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 
+// Bands by meaning, not by key name: which key holds the low case ("p10" or "p90") depends on the
+// P-label convention lib/engine.ts uses, and this golden must hold under either.
+const lohi = (b: object) => { const v = Object.values(b) as number[]; return { low: Math.min(...v), p50: (b as { p50: number }).p50, high: Math.max(...v) }; };
+
 const laterals = [10000, 7500, 12500, 3500, 16000];
 const radii = [3, 1, 0.5, 5, 1.5, 2];
 const filterSets: Omit<Filters, "radiusMi">[] = [
@@ -40,7 +44,7 @@ const cases = points.map(([lat, lon, radius], k) => {
     input: { lat, lon, lateralFt: t.lateralFt, ...f },
     county: r.county, countyInferredFromMi: r.countyInferredFromMi, inCoverage: r.inCoverage,
     features: FEATURES.map((n) => (Number.isFinite(r.features[n]) ? r.features[n] : null)),
-    cum12: r.cum12, eur: r.eur, modelOffsets: r.modelOffsets,
+    cum12: lohi(r.cum12), eur: lohi(r.eur), modelOffsets: r.modelOffsets,
     offsets: r.offsets.map((o) => [o.api10, o.dist_mi]),
     excludedNearby: r.excludedNearby.map((e) => [e.label, e.count]),
     analogEur: r.analogEur, warnings: r.warnings,

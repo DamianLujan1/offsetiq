@@ -4,7 +4,8 @@
 // that carries the report itself after the '#', so nothing is stored anywhere.
 import { csvCell, fmtYm } from "./engine";
 
-export interface Band { p10: number; p50: number; p90: number }
+/** PRMS, as on the Analyze page: p90 = low case (90% chance the actual is at least this), p10 = high case. */
+export interface Band { p90: number; p50: number; p10: number }
 export interface Rationale { headline: string; details: string[]; why: string }
 export interface Row {
   id: string; rank: number; region: string; lat: number; lon: number; county: string;
@@ -108,7 +109,8 @@ export function analyzeHref(lat: number, lon: number, lateralFt: number, radiusM
 
 export const REPORT_COLUMNS = [
   "Your rank", "Agent rank", "Location ID", "Area", "Lat (NAD83)", "Lon (NAD83)", "County", "Evidence tier",
-  "12-mo oil P10 (bbl)", "12-mo oil P50 (bbl)", "12-mo oil P90 (bbl)", "EUR P10 (bbl)", "EUR P50 (bbl)", "EUR P90 (bbl)",
+  "12-mo oil P90, low case (bbl)", "12-mo oil P50 (bbl)", "12-mo oil P10, high case (bbl)",
+  "EUR P90, low case (bbl)", "EUR P50 (bbl)", "EUR P10, high case (bbl)",
   "Offsets within radius", "Median actual 12-mo oil of those (bbl)", "Wells feeding the model (3 mi)",
   "Multi-well-lease gaps within radius (not used)", "Other unused horizontals within radius", "Flags",
   "Rationale", "Rationale details", "Why this rank (agent)", "Open in Analyze",
@@ -121,12 +123,12 @@ export function reportCsv(rep: Report, origin = ""): string {
     `# Approved by the operator ${rep.approvedAt}: ${rep.rows.length} of ${rep.proposed} proposed locations kept${rep.edited ? "; order or selection edited by the operator" : "; agent order unchanged"}.`,
     `# Plan: ${rep.plan} Spacing ${rep.spacingAcres} acres; lateral ${r(rep.lateralFt)} ft; offset radius ${rep.radiusMi} mi.`,
     `# Source: Texas RRC public data (PDQ dump ${rep.data.pdq_dump_date}; production through ${fmtYm(rep.data.last_complete_month)}). Multi-well-lease wells are counted as coverage gaps, never given volumes. Blank = not available.`,
-    `# Model median error on held-out 2022+ wells: ${r(rep.model.cum12_median_ape * 100)}% (12-mo oil), ${r(rep.model.eur_median_ape * 100)}% (EUR). Screening estimate, not a reserves report.`,
+    `# P90 = low case (90% chance the actual is at least this), P10 = high case (PRMS). Model median error on held-out 2022+ wells: ${r(rep.model.cum12_median_ape * 100)}% (12-mo oil), ${r(rep.model.eur_median_ape * 100)}% (EUR). Screening estimate, not a reserves report.`,
   ];
   const lines = [REPORT_COLUMNS.map(csvCell).join(",")];
   for (const x of rep.rows) {
     lines.push([x.rank, x.agentRank, x.id, x.region, x.lat.toFixed(6), x.lon.toFixed(6), x.county, x.tier === "supported" ? "3+ offsets" : "1-2 offsets (low confidence)",
-      r(x.cum12.p10), r(x.cum12.p50), r(x.cum12.p90), r(x.eur.p10), r(x.eur.p50), r(x.eur.p90), x.offsets,
+      r(x.cum12.p90), r(x.cum12.p50), r(x.cum12.p10), r(x.eur.p90), r(x.eur.p50), r(x.eur.p10), x.offsets,
       x.medianCum12 === null ? null : r(x.medianCum12), x.modelOffsets, x.multiWell, x.otherGaps, x.flags.join("; "),
       x.headline, x.details.join(" "), x.why, origin + analyzeHref(x.lat, x.lon, rep.lateralFt, rep.radiusMi, rep.filters),
     ].map(csvCell).join(","));
@@ -186,7 +188,7 @@ export async function encodeReport(rep: Report): Promise<string> {
 
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 const isStr = (v: unknown, max = 4000): v is string => typeof v === "string" && v.length <= max;
-const isBand = (b: unknown): b is Band => !!b && typeof b === "object" && ["p10", "p50", "p90"].every((k) => isNum((b as Record<string, unknown>)[k]));
+const isBand = (b: unknown): b is Band => !!b && typeof b === "object" && ["p90", "p50", "p10"].every((k) => isNum((b as Record<string, unknown>)[k]));
 
 /** Decode and validate a shared report; null for anything malformed. Rendered as text only. */
 export async function decodeReport(s: string): Promise<Report | null> {

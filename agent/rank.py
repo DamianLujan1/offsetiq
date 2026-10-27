@@ -143,8 +143,9 @@ def rationale(r: int, s: Screen, e: dict, nxt: Screen | None) -> dict:
     headline = (f"Rank #{r}: {evid}, 12-mo oil P50 {kb(s.cum12['p50'])} bbl, EUR P50 {kb(s.eur['p50'])} bbl, "
                 f"{mw} multi-well gap{'' if mw == 1 else 's'} excluded.")
     d = [f"Forecast (same LightGBM model as Analyze): first-12-month oil P50 {kb(s.cum12['p50'])} bbl "
-         f"(P10-P90 {kb(s.cum12['p10'])}-{kb(s.cum12['p90'])}); EUR P50 {kb(s.eur['p50'])} bbl "
-         f"(P10-P90 {kb(s.eur['p10'])}-{kb(s.eur['p90'])}) for a {s.lateral_ft:,.0f} ft lateral."]
+         f"(P90-P10 {kb(s.cum12['p90'])}-{kb(s.cum12['p10'])}); EUR P50 {kb(s.eur['p50'])} bbl "
+         f"(P90-P10 {kb(s.eur['p90'])}-{kb(s.eur['p10'])}) for a {s.lateral_ft:,.0f} ft lateral. "
+         "P90 is the low case, P10 the high case (PRMS)."]
     if e["nearest"]:
         n = e["nearest"]
         line = f"Nearest offset: {n['lease']} {n['well_no']} ({n['operator']}) at {n['dist_mi']:.2f} mi."

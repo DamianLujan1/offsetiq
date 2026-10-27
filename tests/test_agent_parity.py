@@ -57,9 +57,9 @@ def test_location_matches_analyze(snap, case, tiled):
             assert math.isnan(r.features[k]), k
         else:
             assert r.features[k] == pytest.approx(ts, rel=1e-9, abs=1e-12), k
-    for band in ("cum12", "eur"):
-        for q in ("p10", "p50", "p90"):
-            assert getattr(r, band)[q] == pytest.approx(case[band][q], rel=1e-9), f"{band} {q}"
+    for band in ("cum12", "eur"):  # the agent labels the low case P90 and the high case P10 (PRMS)
+        for ours, theirs in (("p90", "low"), ("p50", "p50"), ("p10", "high")):
+            assert getattr(r, band)[ours] == pytest.approx(case[band][theirs], rel=1e-9), f"{band} {ours}"
     assert r.model_offsets == case["modelOffsets"]
     assert [snap.api10[j] for j, _ in r.offsets] == [a for a, _ in case["offsets"]]
     assert [d for _, d in r.offsets] == pytest.approx([d for _, d in case["offsets"]], rel=1e-9)

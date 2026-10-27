@@ -102,14 +102,14 @@
    "county": "MIDLAND",
    "tier": "supported",
    "cum12": {
-    "p10": 120059.08246297209,
+    "p90": 120059.08246297209,
     "p50": 170596.2301170832,
-    "p90": 240066.20487185215
+    "p10": 240066.20487185215
    },
    "eur": {
-    "p10": 251626.3202197597,
+    "p90": 251626.3202197597,
     "p50": 383291.8358905463,
-    "p90": 646055.7312161346
+    "p10": 646055.7312161346
    },
    "model_offsets": 32,
    "nearest_model_offset_mi": 0.9675965658608219,
@@ -145,7 +145,7 @@
    "rationale": {
     "headline": "Rank #1: 1 nearby offset within 1 mile, median 12-mo oil 229k bbl, 12-mo oil P50 171k bbl, EUR P50 383k bbl, 12 multi-well gaps excluded.",
     "details": [
-     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 171k bbl (P10-P90 120k-240k); EUR P50 383k bbl (P10-P90 252k-646k) for a 10,000 ft lateral.",
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 171k bbl (P90-P10 120k-240k); EUR P50 383k bbl (P90-P10 252k-646k) for a 10,000 ft lateral. P90 is the low case, P10 the high case (PRMS).",
      "Nearest offset: CMC FENWAY 22/34 CC 0022WA (CHEVRON U. S. A. INC.) at 0.97 mi. Median Arps EUR of the 1 fitted: 792k bbl.",
      "Wells feeding the model: 32 attributable with an early decline fit within 3 mi (nearest 0.97 mi).",
      "12 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",
@@ -166,14 +166,14 @@
    "county": "MIDLAND",
    "tier": "supported",
    "cum12": {
-    "p10": 122572.2074313141,
+    "p90": 122572.2074313141,
     "p50": 168525.40776159574,
-    "p90": 237116.3883043866
+    "p10": 237116.3883043866
    },
    "eur": {
-    "p10": 266266.4873324344,
+    "p90": 266266.4873324344,
     "p50": 395575.6811646518,
-    "p90": 636162.657057411
+    "p10": 636162.657057411
    },
    "model_offsets": 32,
    "nearest_model_offset_mi": 0.8235253619218441,
@@ -211,7 +211,7 @@
    "rationale": {
     "headline": "Rank #2: 3 nearby offsets within 1 mile, median 12-mo oil 185k bbl, 12-mo oil P50 169k bbl, EUR P50 396k bbl, 11 multi-well gaps excluded.",
     "details": [
-     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 169k bbl (P10-P90 123k-237k); EUR P50 396k bbl (P10-P90 266k-636k) for a 10,000 ft lateral.",
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 169k bbl (P90-P10 123k-237k); EUR P50 396k bbl (P90-P10 266k-636k) for a 10,000 ft lateral. P90 is the low case, P10 the high case (PRMS).",
      "Nearest offset: CMC FENWAY 22/34 F 0034WB (CHEVRON U. S. A. INC.) at 0.82 mi. Median Arps EUR of the 3 fitted: 501k bbl.",
      "Wells feeding the model: 32 attributable with an early decline fit within 3 mi (nearest 0.82 mi).",
      "11 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",
@@ -232,14 +232,14 @@
    "county": "MIDLAND",
    "tier": "supported",
    "cum12": {
-    "p10": 122572.2074313141,
+    "p90": 122572.2074313141,
     "p50": 167422.2479909521,
-    "p90": 236213.41615393653
+    "p10": 236213.41615393653
    },
    "eur": {
-    "p10": 261451.72339074465,
+    "p90": 261451.72339074465,
     "p50": 370653.2084140438,
-    "p90": 627151.8519319124
+    "p10": 627151.8519319124
    },
    "model_offsets": 31,
    "nearest_model_offset_mi": 0.7599676675936308,
@@ -277,7 +277,7 @@
    "rationale": {
     "headline": "Rank #3: 3 nearby offsets within 1 mile, median 12-mo oil 185k bbl, 12-mo oil P50 167k bbl, EUR P50 371k bbl, 16 multi-well gaps excluded.",
     "details": [
-     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P10-P90 123k-236k); EUR P50 371k bbl (P10-P90 261k-627k) for a 10,000 ft lateral.",
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P90-P10 123k-236k); EUR P50 371k bbl (P90-P10 261k-627k) for a 10,000 ft lateral. P90 is the low case, P10 the high case (PRMS).",
      "Nearest offset: CMC FENWAY 22/34 CC 0022WA (CHEVRON U. S. A. INC.) at 0.76 mi. Median Arps EUR of the 3 fitted: 501k bbl.",
      "Wells feeding the model: 31 attributable with an early decline fit within 3 mi (nearest 0.76 mi).",
      "16 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",
@@ -298,14 +298,14 @@
    "county": "MIDLAND",
    "tier": "supported",
    "cum12": {
-    "p10": 122856.80928254941,
+    "p90": 122856.80928254941,
     "p50": 167044.70817102166,
-    "p90": 225715.86870246864
+    "p10": 225715.86870246864
    },
    "eur": {
-    "p10": 267609.83920887945,
+    "p90": 267609.83920887945,
     "p50": 385630.7802311596,
-    "p90": 664864.7694859069
+    "p10": 664864.7694859069
    },
    "model_offsets": 31,
    "nearest_model_offset_mi": 0.6527455854971377,
@@ -341,7 +341,7 @@
    "rationale": {
     "headline": "Rank #4: 3 nearby offsets within 1 mile, median 12-mo oil 185k bbl, 12-mo oil P50 167k bbl, EUR P50 386k bbl, 4 multi-well gaps excluded.",
     "details": [
-     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P10-P90 123k-226k); EUR P50 386k bbl (P10-P90 268k-665k) for a 10,000 ft lateral.",
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P90-P10 123k-226k); EUR P50 386k bbl (P90-P10 268k-665k) for a 10,000 ft lateral. P90 is the low case, P10 the high case (PRMS).",
      "Nearest offset: CMC FENWAY 22/34 F 0034WB (CHEVRON U. S. A. INC.) at 0.65 mi. Median Arps EUR of the 3 fitted: 501k bbl.",
      "Wells feeding the model: 31 attributable with an early decline fit within 3 mi (nearest 0.65 mi).",
      "4 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",
@@ -361,14 +361,14 @@
    "county": "MIDLAND",
    "tier": "supported",
    "cum12": {
-    "p10": 122477.62130577142,
+    "p90": 122477.62130577142,
     "p50": 167002.82486304987,
-    "p90": 240171.1362750046
+    "p10": 240171.1362750046
    },
    "eur": {
-    "p10": 256505.0578269791,
+    "p90": 256505.0578269791,
     "p50": 407507.9118353873,
-    "p90": 665997.4425684678
+    "p10": 665997.4425684678
    },
    "model_offsets": 18,
    "nearest_model_offset_mi": 0.5015102433043822,
@@ -406,7 +406,7 @@
    "rationale": {
     "headline": "Rank #5: 5 nearby offsets within 1 mile, median 12-mo oil 144k bbl, 12-mo oil P50 167k bbl, EUR P50 408k bbl, 11 multi-well gaps excluded.",
     "details": [
-     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P10-P90 122k-240k); EUR P50 408k bbl (P10-P90 257k-666k) for a 10,000 ft lateral.",
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P90-P10 122k-240k); EUR P50 408k bbl (P90-P10 257k-666k) for a 10,000 ft lateral. P90 is the low case, P10 the high case (PRMS).",
      "Nearest offset: CMC FENWAY 22/34 CC 0022WA (CHEVRON U. S. A. INC.) at 0.50 mi. Median Arps EUR of the 5 fitted: 455k bbl.",
      "Wells feeding the model: 18 attributable with an early decline fit within 3 mi (nearest 0.50 mi).",
      "11 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",
@@ -426,14 +426,14 @@
    "county": "MIDLAND",
    "tier": "supported",
    "cum12": {
-    "p10": 126766.23227325958,
+    "p90": 126766.23227325958,
     "p50": 166631.95685568007,
-    "p90": 233351.14194195735
+    "p10": 233351.14194195735
    },
    "eur": {
-    "p10": 251264.64823566072,
+    "p90": 251264.64823566072,
     "p50": 368165.85848441906,
-    "p90": 625102.1214850232
+    "p10": 625102.1214850232
    },
    "model_offsets": 21,
    "nearest_model_offset_mi": 0.4849593389780794,
@@ -471,7 +471,7 @@
    "rationale": {
     "headline": "Rank #6: 3 nearby offsets within 1 mile, median 12-mo oil 185k bbl, 12-mo oil P50 167k bbl, EUR P50 368k bbl, 12 multi-well gaps excluded.",
     "details": [
-     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P10-P90 127k-233k); EUR P50 368k bbl (P10-P90 251k-625k) for a 10,000 ft lateral.",
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P90-P10 127k-233k); EUR P50 368k bbl (P90-P10 251k-625k) for a 10,000 ft lateral. P90 is the low case, P10 the high case (PRMS).",
      "Nearest offset: CMC FENWAY 22/34 CC 0022WA (CHEVRON U. S. A. INC.) at 0.48 mi. Median Arps EUR of the 3 fitted: 501k bbl.",
      "Wells feeding the model: 21 attributable with an early decline fit within 3 mi (nearest 0.48 mi).",
      "12 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",

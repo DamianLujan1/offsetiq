@@ -101,8 +101,8 @@ class Screen:
     county_dist_mi: float
     in_coverage: bool
     features: dict
-    cum12: dict                 # {"p10","p50","p90"} bbl, first 12 producing months
-    eur: dict                   # {"p10","p50","p90"} bbl
+    cum12: dict                 # {"p90" low case, "p50", "p10" high case} bbl, first 12 producing months (PRMS)
+    eur: dict                   # same convention, bbl
     model_offsets: int          # attributable wells with an early fit within 3 mi (= n_off feature)
     offsets: list               # evidence: [(well index, distance mi)] within radius_mi, nearest first
     gaps: dict                  # horizontals.json code -> count within radius_mi (code != 0)
@@ -112,8 +112,10 @@ class Screen:
 
 
 def _band(lo: float, mid: float, hi: float) -> dict:
+    """PRMS labels, like the Analyze page: P90 = low case (90% chance the actual is at least this),
+    P10 = high case. The quantile models keep their alpha names: "_p10" is alpha 0.1, the PRMS P90."""
     s = sorted([lo, mid, hi])
-    return {"p10": s[0], "p50": min(max(mid, s[0]), s[2]), "p90": s[2]}
+    return {"p90": s[0], "p50": min(max(mid, s[0]), s[2]), "p10": s[2]}
 
 
 def screen_location(snap: Snapshot, lat: float, lon: float, lateral_ft: float, radius_mi: float = RADIUS_MI,
