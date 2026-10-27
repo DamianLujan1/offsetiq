@@ -6,8 +6,8 @@ export default function Login() {
   const [msg, setMsg] = useState("");
   async function go(e: React.FormEvent) {
     e.preventDefault();
-    const r = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
-    const j = await r.json();
+    const j = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) })
+      .then((r) => r.json()).catch(() => ({ error: "Sign-in request failed. Please try again." }));
     if (j.ok) { window.location.href = "/analyze"; } else setMsg(j.error ?? "Error");
   }
   return (

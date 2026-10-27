@@ -7,7 +7,15 @@ import type { Wells } from "@/lib/types";
 
 export default function WellChart({ W, idx, onClose }: { W: Wells; idx: number; onClose: () => void }) {
   const [s, setS] = useState<{ oil: number[]; mop: number[]; ym: number[] } | null>(null);
-  useEffect(() => { setS(null); loadMonthly(W.county[idx]).then((m) => setS(m[W.api10[idx]] ?? null)); }, [W, idx]);
+  const [state, setState] = useState<"loading" | "ok" | "missing" | "error">("loading");
+  useEffect(() => {
+    let alive = true; // ignore responses for a well that is no longer selected
+    setS(null); setState("loading");
+    loadMonthly(W.county[idx])
+      .then((m) => { if (!alive) return; const v = m[W.api10[idx]] ?? null; setS(v); setState(v ? "ok" : "missing"); })
+      .catch(() => { if (alive) setState("error"); });
+    return () => { alive = false; };
+  }, [W, idx]);
   const w = 420, h = 200, pl = 44, pb = 22;
   const qi = W.qi[idx], Di = W.Di[idx], b = W.b[idx], pk = W.peak_mop[idx];
   let fit: [number, number][] = [];
@@ -37,7 +45,7 @@ export default function WellChart({ W, idx, onClose }: { W: Wells; idx: number; 
         {fit.length > 1 && <polyline fill="none" stroke="#f5a524" strokeWidth={2} strokeDasharray={undefined} points={fit.filter((p) => p[0] <= maxM).map((p) => `${X(p[0])},${Y(p[1])}`).join(" ")} />}
         {fit.length > 1 && <polyline fill="none" stroke="#f5a524" strokeWidth={2} strokeDasharray="4 3" points={fit.filter((p) => p[0] >= maxM).map((p) => `${X(p[0])},${Y(p[1])}`).join(" ")} />}
         {pts.map((p, i) => <circle key={i} cx={X(p[0])} cy={Y(p[1])} r={2} fill="#38bdf8" />)}
-        {!s && <text x={w / 2} y={h / 2} fill="#93a1bd" textAnchor="middle" fontSize={12}>loading monthly RRC volumes…</text>}
+        {!s && <text x={w / 2} y={h / 2} fill="#93a1bd" textAnchor="middle" fontSize={12}>{state === "loading" ? "loading monthly RRC volumes…" : state === "missing" ? "no monthly RRC volumes for this well" : "could not load monthly RRC volumes"}</text>}
       </svg>
       <div className="small mut">Blue: reported monthly oil (bbl, log scale, x = producing month). Orange: Arps fit; dashed = forecast to {ECON_LIMIT} bbl/mo.</div>
       <div className="small" style={{ marginTop: 4 }}>

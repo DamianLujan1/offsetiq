@@ -13,7 +13,7 @@ Offset analysis for Permian operators in **Midland, Ector and Andrews County, TX
 
 ## Refresh the data
 ```
-pip install pandas numpy scipy lightgbm scikit-learn pyshp pytest
+pip install pandas numpy scipy lightgbm scikit-learn pyshp pyproj requests pytest
 python pipeline/fetch_rrc.py      # RRC PDQ dump + well-layer shapefiles -> data/raw (not committed)
 python pipeline/build_dataset.py  # single-well-lease attribution -> data/processed
 python pipeline/dca.py            # Arps fits
