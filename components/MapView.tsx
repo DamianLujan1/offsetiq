@@ -4,7 +4,8 @@ import type * as LT from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Horizontals, Wells } from "@/lib/types";
 
-const CL: Record<string, string> = { Steep: "#f87171", Moderate: "#f5a524", Mild: "#34d399", "Not fitted": "#64748b" };
+// Keys must match the cluster names written by pipeline/clustering.py.
+const CL: Record<string, string> = { "Steep decline": "#f87171", "Moderate decline": "#f5a524", "Mild decline": "#34d399", "Not fitted": "#64748b" };
 
 interface Props {
   W: Wells; H: Horizontals; target: { lat: number; lon: number } | null; radiusMi: number;
@@ -23,6 +24,7 @@ export default function MapView({ W, H, target, radiusMi, offsetIdx, selected, o
 
   useEffect(() => {
     let alive = true;
+    let onResize: (() => void) | null = null;
     import("leaflet").then((mod) => {
       if (!alive || !el.current || map.current) return;
       const Lf = (mod as unknown as { default: typeof LT }).default ?? (mod as unknown as typeof LT);
@@ -57,9 +59,14 @@ export default function MapView({ W, H, target, radiusMi, offsetIdx, selected, o
       setReady(true);
       setTimeout(() => m.invalidateSize(), 50);
       setTimeout(() => m.invalidateSize(), 500);
-      window.addEventListener("resize", () => m.invalidateSize());
+      onResize = () => m.invalidateSize();
+      window.addEventListener("resize", onResize);
     });
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+      if (onResize) window.removeEventListener("resize", onResize);
+      map.current?.remove(); map.current = null; dyn.current = null; L.current = null;
+    };
   }, [W, H]);
 
   useEffect(() => {
@@ -86,7 +93,7 @@ export default function MapView({ W, H, target, radiusMi, offsetIdx, selected, o
     <>
       <div id="map" ref={el} />
       <div className="legend noprint">
-        Decline cluster:<span style={{ background: CL.Steep }} />Steep<span style={{ background: CL.Moderate }} />Moderate<span style={{ background: CL.Mild }} />Mild<span style={{ background: CL["Not fitted"] }} />Not fitted
+        Decline cluster:<span style={{ background: CL["Steep decline"] }} />Steep<span style={{ background: CL["Moderate decline"] }} />Moderate<span style={{ background: CL["Mild decline"] }} />Mild<span style={{ background: CL["Not fitted"] }} />Not fitted
         <span style={{ background: "#a78bfa" }} />Coverage gap · sticks = SHL→BHL · click map to drop a pin
       </div>
     </>

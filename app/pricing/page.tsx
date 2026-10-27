@@ -9,9 +9,15 @@ export default function Pricing() {
   const [busy, setBusy] = useState(false);
   async function checkout() {
     setBusy(true); setMsg("");
-    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ seats }) });
-    const j = await r.json(); setBusy(false);
-    if (j.url) window.location.href = j.url; else setMsg(j.message ?? j.error ?? "Error");
+    try {
+      const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ seats }) });
+      const j = await r.json();
+      if (j.url) window.location.href = j.url; else setMsg(j.message ?? j.error ?? "Error");
+    } catch {
+      setMsg("Checkout request failed. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
   return (
     <main><div className="wrap" style={{ maxWidth: 900 }}>

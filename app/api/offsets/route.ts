@@ -21,6 +21,8 @@ export async function GET(req: Request) {
   const t0 = Date.now();
   const u = new URL(req.url), q = u.searchParams;
   const num = (k: string) => (q.get(k) === null || q.get(k) === "" ? null : Number(q.get(k)));
+  const bad = ["r", "min", "max", "lat_ft"].filter((k) => { const v = num(k); return v !== null && !(Number.isFinite(v) && v >= 0); });
+  if (bad.length) return NextResponse.json({ error: `Invalid number for: ${bad.join(", ")}` }, { status: 400 });
   try {
     const { W, H, M, MH, meta } = await load(u.origin);
     const tLoad = Date.now() - t0;
@@ -36,7 +38,7 @@ export async function GET(req: Request) {
     } else {
       const lat = num("lat"), lon = num("lon");
       if (lat === null || lon === null || !isFinite(lat) || !isFinite(lon)) return NextResponse.json({ error: "Provide lat & lon, or api" }, { status: 400 });
-      target = { lat, lon, lateralFt: num("lat_ft") ?? 10000, vintageYear: 2025, mode: "prospect" as const, label: `Pin ${lat.toFixed(5)}, ${lon.toFixed(5)}` };
+      target = { lat, lon, lateralFt: num("lat_ft") || 10000, vintageYear: 2025, mode: "prospect" as const, label: `Pin ${lat.toFixed(5)}, ${lon.toFixed(5)}` };
     }
     const r = analyze(W, H, M, target, filters, MH);
     if (q.get("format") === "csv") {

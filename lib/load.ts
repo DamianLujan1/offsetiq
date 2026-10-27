@@ -14,13 +14,19 @@ let p: Promise<Bundle> | null = null;
 export function loadAll(): Promise<Bundle> {
   if (!p) {
     const j = (f: string) => fetch(`/data/${f}`).then((r) => { if (!r.ok) throw new Error(`${f}: ${r.status}`); return r.json(); });
-    p = Promise.all([j("wells.json"), j("horizontals.json"), j("model.json"), j("model_holdout.json"), j("meta.json")]).then(([W, H, M, MH, meta]) => ({ W, H, M, MH, meta }));
+    p = Promise.all([j("wells.json"), j("horizontals.json"), j("model.json"), j("model_holdout.json"), j("meta.json")])
+      .then(([W, H, M, MH, meta]) => ({ W, H, M, MH, meta }))
+      .catch((e) => { p = null; throw e; }); // don't cache a failed load; allow retry
   }
   return p;
 }
 const mcache: Record<string, Promise<Monthly>> = {};
 export function loadMonthly(county: string): Promise<Monthly> {
   const c = county.toLowerCase();
-  if (!mcache[c]) mcache[c] = fetch(`/data/monthly_${c}.json`).then((r) => r.json());
+  if (!mcache[c]) {
+    mcache[c] = fetch(`/data/monthly_${c}.json`)
+      .then((r) => { if (!r.ok) throw new Error(`monthly_${c}.json: ${r.status}`); return r.json(); })
+      .catch((e) => { delete mcache[c]; throw e; });
+  }
   return mcache[c];
 }

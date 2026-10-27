@@ -45,7 +45,7 @@ export default function Analyzer() {
   useEffect(() => {
     if (!B) return;
     const r = Number(sp.get("r")); if (r > 0 && r <= 10) setRadius(r);
-    if (sp.get("min")) setMinLat(sp.get("min")!); if (sp.get("max")) setMaxLat(sp.get("max")!);
+    if (sp.get("min")) setMinLat(sp.get("min")!); if (sp.get("max")) setMaxLat(sp.get("max")!); if (sp.get("op")) setOp(sp.get("op")!);
     const api = sp.get("api");
     if (api) { pickApi(api, sp.get("mode") === "prospect" ? "prospect" : "backtest"); return; }
     const lat = Number(sp.get("lat")), lon = Number(sp.get("lon")), lf = Number(sp.get("lat_ft")) || 10000;
@@ -53,23 +53,26 @@ export default function Analyzer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [B]);
 
-  function share(t: Target, extra: Record<string, string> = {}) {
+  // keep the shareable URL in sync with what is on screen (target, lateral, radius, filters)
+  useEffect(() => {
+    if (!B || !target) return;
     const p = new URLSearchParams();
-    if (t.mode === "backtest" && t.wellIdx !== undefined && B) { p.set("api", B.W.api10[t.wellIdx]); }
-    else { p.set("lat", t.lat.toFixed(6)); p.set("lon", t.lon.toFixed(6)); p.set("lat_ft", String(Math.round(t.lateralFt))); }
-    p.set("r", String(radius)); if (minLat) p.set("min", minLat); if (maxLat) p.set("max", maxLat);
-    for (const [k, v] of Object.entries(extra)) p.set(k, v);
+    if (target.mode === "backtest" && target.wellIdx !== undefined) { p.set("api", B.W.api10[target.wellIdx]); }
+    else { p.set("lat", target.lat.toFixed(6)); p.set("lon", target.lon.toFixed(6)); p.set("lat_ft", String(Math.round(lateral))); }
+    p.set("r", String(radius)); if (minLat) p.set("min", minLat); if (maxLat) p.set("max", maxLat); if (op) p.set("op", op);
     router.replace(`/analyze?${p.toString()}`, { scroll: false });
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [B, target, lateral, radius, minLat, maxLat, op]);
+
   function setPin(lat: number, lon: number, lf = lateral) {
     const t: Target = { lat, lon, lateralFt: lf, vintageYear: DEFAULT_VINTAGE, mode: "prospect", label: `Pin ${lat.toFixed(4)}, ${lon.toFixed(4)}` };
-    setLatIn(lat.toFixed(5)); setLonIn(lon.toFixed(5)); setTarget(t); setSel(null); setMsg(null); share(t);
+    setLatIn(lat.toFixed(5)); setLonIn(lon.toFixed(5)); setTarget(t); setSel(null); setMsg(null);
   }
   function backtest(i: number) {
     if (!B) return;
     const W = B.W;
     const t: Target = { lat: W.lat[i], lon: W.lon[i], lateralFt: W.lat_ft[i], vintageYear: Math.floor(W.first[i] / 100), mode: "backtest", wellIdx: i, label: `${W.lease[i]} ${W.well_no[i]} (API ${W.api10[i]})` };
-    setLateral(Math.round(W.lat_ft[i])); setTarget(t); setSel(null); share(t);
+    setLateral(Math.round(W.lat_ft[i])); setTarget(t); setSel(null);
   }
   function pickApi(raw: string, mode: "backtest" | "prospect" = "backtest") {
     if (!B) return;
@@ -81,6 +84,10 @@ export default function Analyzer() {
       return;
     }
     const h = B.H.api10.indexOf(a);
+    if (h >= 0 && (B.H.lat[h] == null || B.H.lon[h] == null)) {
+      setMsg(`API ${a} is an RRC horizontal, but the RRC well layer has no surface location for it (${B.H.labels[B.H.code[h]]}), so it cannot be placed on the map.`);
+      return;
+    }
     if (h >= 0) {
       const lf = B.H.lat_ft[h] ?? 10000; setLateral(Math.round(lf)); setPin(B.H.lat[h], B.H.lon[h], lf);
       setMsg(`API ${a} is an RRC horizontal but its production is not attributable (${B.H.labels[B.H.code[h]]}). Treated as a prospect location at its lateral midpoint.`);
