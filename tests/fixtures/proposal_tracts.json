@@ -1,0 +1,837 @@
+{
+ "type": "proposal",
+ "prompt": "compare these two tracts, top 6, csv",
+ "intent": {
+  "action": "compare",
+  "spacing_acres": 40.0,
+  "spacing_explicit": false,
+  "lateral_ft": 10000.0,
+  "lateral_explicit": false,
+  "radius_mi": 1.0,
+  "filters": {
+   "min_lat_ft": null,
+   "max_lat_ft": null,
+   "operator": "",
+   "min_first_ym": null,
+   "max_first_ym": null
+  },
+  "top_n": 6,
+  "formats": [
+   "csv"
+  ],
+  "notes": [],
+  "unsupported": [],
+  "clarify": null,
+  "regions": [
+   {
+    "label": "North",
+    "kind": "polygon",
+    "ring": [
+     [
+      31.9,
+      -102.1
+     ],
+     [
+      31.9,
+      -102.08
+     ],
+     [
+      31.915,
+      -102.08
+     ],
+     [
+      31.915,
+      -102.1
+     ]
+    ],
+    "point": [],
+    "source": "drawn",
+    "detail": "778 acres"
+   },
+   {
+    "label": "South",
+    "kind": "polygon",
+    "ring": [
+     [
+      31.8,
+      -102.0
+     ],
+     [
+      31.8,
+      -101.98
+     ],
+     [
+      31.815,
+      -101.98
+     ],
+     [
+      31.815,
+      -102.0
+     ]
+    ],
+    "point": [],
+    "source": "drawn",
+    "detail": "779 acres"
+   }
+  ]
+ },
+ "plan": {
+  "spacing_acres": 40.0,
+  "regions": [
+   {
+    "label": "North",
+    "kind": "polygon",
+    "candidates": 20,
+    "detail": "778 acres"
+   },
+   {
+    "label": "South",
+    "kind": "polygon",
+    "candidates": 20,
+    "detail": "779 acres"
+   }
+  ]
+ },
+ "ranked": [
+  {
+   "id": "T2-r0c4",
+   "rank": 1,
+   "region": "South",
+   "lat": 31.80180914480475,
+   "lon": -101.98084037536039,
+   "county": "MIDLAND",
+   "tier": "supported",
+   "cum12": {
+    "p10": 120059.08246297209,
+    "p50": 170596.2301170832,
+    "p90": 240066.20487185215
+   },
+   "eur": {
+    "p10": 251626.3202197597,
+    "p50": 383291.8358905463,
+    "p90": 646055.7312161346
+   },
+   "model_offsets": 32,
+   "nearest_model_offset_mi": 0.9675965658608219,
+   "evidence": {
+    "radius_mi": 1.0,
+    "n": 1,
+    "median_cum12": 229309.0,
+    "n_cum12": 1,
+    "median_eur": 791991.0,
+    "n_eur": 1,
+    "nearest": {
+     "api10": "4232941655",
+     "lease": "CMC FENWAY 22/34 CC",
+     "well_no": "0022WA",
+     "operator": "CHEVRON U. S. A. INC.",
+     "dist_mi": 0.9675965658608219
+    },
+    "apis": [
+     "4232941655"
+    ]
+   },
+   "gaps": {
+    "multi_well": 12,
+    "other": 47
+   },
+   "analog_eur": {
+    "value": 742960.0,
+    "n": 1
+   },
+   "flags": [
+    "gaps_dominate"
+   ],
+   "rationale": {
+    "headline": "Rank #1: 1 nearby offset within 1 mile, median 12-mo oil 229k bbl, 12-mo oil P50 171k bbl, EUR P50 383k bbl, 12 multi-well gaps excluded.",
+    "details": [
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 171k bbl (P10-P90 120k-240k); EUR P50 383k bbl (P10-P90 252k-646k) for a 10,000 ft lateral.",
+     "Nearest offset: CMC FENWAY 22/34 CC 0022WA (CHEVRON U. S. A. INC.) at 0.97 mi. Median Arps EUR of the 1 fitted: 792k bbl.",
+     "Wells feeding the model: 32 attributable with an early decline fit within 3 mi (nearest 0.97 mi).",
+     "12 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",
+     "47 other mapped horizontals within 1 mile not used (no completion record yet, gas, or no reported oil).",
+     "Cross-check: distance-weighted EUR per 1,000 ft of 1 fitted offset x lateral = 743k bbl.",
+     "Multi-well-lease horizontals (12) far outnumber attributable offsets (1) within 1 mile: this is mostly pad development, so the public evidence is a thin single-well-lease slice of it."
+    ],
+    "why": "Ahead of #2 on 12-mo oil P50 (171k vs 169k bbl)."
+   },
+   "analyze_url": "/analyze?lat=31.801809&lon=-101.980840&lat_ft=10000&r=1"
+  },
+  {
+   "id": "T2-r1c4",
+   "rank": 2,
+   "region": "South",
+   "lat": 31.80542743441425,
+   "lon": -101.98084037536039,
+   "county": "MIDLAND",
+   "tier": "supported",
+   "cum12": {
+    "p10": 122572.2074313141,
+    "p50": 168525.40776159574,
+    "p90": 237116.3883043866
+   },
+   "eur": {
+    "p10": 266266.4873324344,
+    "p50": 395575.6811646518,
+    "p90": 636162.657057411
+   },
+   "model_offsets": 32,
+   "nearest_model_offset_mi": 0.8235253619218441,
+   "evidence": {
+    "radius_mi": 1.0,
+    "n": 3,
+    "median_cum12": 184588.0,
+    "n_cum12": 3,
+    "median_eur": 500825.0,
+    "n_eur": 3,
+    "nearest": {
+     "api10": "4232941422",
+     "lease": "CMC FENWAY 22/34 F",
+     "well_no": "0034WB",
+     "operator": "CHEVRON U. S. A. INC.",
+     "dist_mi": 0.8235253619218441
+    },
+    "apis": [
+     "4232941422",
+     "4232941655",
+     "4232941623"
+    ]
+   },
+   "gaps": {
+    "multi_well": 11,
+    "other": 42
+   },
+   "analog_eur": {
+    "value": 579033.8000558136,
+    "n": 3
+   },
+   "flags": [
+    "gaps_dominate"
+   ],
+   "rationale": {
+    "headline": "Rank #2: 3 nearby offsets within 1 mile, median 12-mo oil 185k bbl, 12-mo oil P50 169k bbl, EUR P50 396k bbl, 11 multi-well gaps excluded.",
+    "details": [
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 169k bbl (P10-P90 123k-237k); EUR P50 396k bbl (P10-P90 266k-636k) for a 10,000 ft lateral.",
+     "Nearest offset: CMC FENWAY 22/34 F 0034WB (CHEVRON U. S. A. INC.) at 0.82 mi. Median Arps EUR of the 3 fitted: 501k bbl.",
+     "Wells feeding the model: 32 attributable with an early decline fit within 3 mi (nearest 0.82 mi).",
+     "11 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",
+     "42 other mapped horizontals within 1 mile not used (no completion record yet, gas, or no reported oil).",
+     "Cross-check: distance-weighted EUR per 1,000 ft of 3 fitted offsets x lateral = 579k bbl.",
+     "Multi-well-lease horizontals (11) far outnumber attributable offsets (3) within 1 mile: this is mostly pad development, so the public evidence is a thin single-well-lease slice of it."
+    ],
+    "why": "Ahead of #3 on 12-mo oil P50 (169k vs 167k bbl)."
+   },
+   "analyze_url": "/analyze?lat=31.805427&lon=-101.980840&lat_ft=10000&r=1"
+  },
+  {
+   "id": "T2-r0c3",
+   "rank": 3,
+   "region": "South",
+   "lat": 31.80180914480475,
+   "lon": -101.98509806972474,
+   "county": "MIDLAND",
+   "tier": "supported",
+   "cum12": {
+    "p10": 122572.2074313141,
+    "p50": 167422.2479909521,
+    "p90": 236213.41615393653
+   },
+   "eur": {
+    "p10": 261451.72339074465,
+    "p50": 370653.2084140438,
+    "p90": 627151.8519319124
+   },
+   "model_offsets": 31,
+   "nearest_model_offset_mi": 0.7599676675936308,
+   "evidence": {
+    "radius_mi": 1.0,
+    "n": 3,
+    "median_cum12": 184588.0,
+    "n_cum12": 3,
+    "median_eur": 500825.0,
+    "n_eur": 3,
+    "nearest": {
+     "api10": "4232941655",
+     "lease": "CMC FENWAY 22/34 CC",
+     "well_no": "0022WA",
+     "operator": "CHEVRON U. S. A. INC.",
+     "dist_mi": 0.7599676675936308
+    },
+    "apis": [
+     "4232941655",
+     "4232941623",
+     "4232941422"
+    ]
+   },
+   "gaps": {
+    "multi_well": 16,
+    "other": 38
+   },
+   "analog_eur": {
+    "value": 581963.0380843881,
+    "n": 3
+   },
+   "flags": [
+    "gaps_dominate"
+   ],
+   "rationale": {
+    "headline": "Rank #3: 3 nearby offsets within 1 mile, median 12-mo oil 185k bbl, 12-mo oil P50 167k bbl, EUR P50 371k bbl, 16 multi-well gaps excluded.",
+    "details": [
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P10-P90 123k-236k); EUR P50 371k bbl (P10-P90 261k-627k) for a 10,000 ft lateral.",
+     "Nearest offset: CMC FENWAY 22/34 CC 0022WA (CHEVRON U. S. A. INC.) at 0.76 mi. Median Arps EUR of the 3 fitted: 501k bbl.",
+     "Wells feeding the model: 31 attributable with an early decline fit within 3 mi (nearest 0.76 mi).",
+     "16 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",
+     "38 other mapped horizontals within 1 mile not used (no completion record yet, gas, or no reported oil).",
+     "Cross-check: distance-weighted EUR per 1,000 ft of 3 fitted offsets x lateral = 582k bbl.",
+     "Multi-well-lease horizontals (16) far outnumber attributable offsets (3) within 1 mile: this is mostly pad development, so the public evidence is a thin single-well-lease slice of it."
+    ],
+    "why": "Ahead of #4 on 12-mo oil P50 (167,422 vs 167,045 bbl)."
+   },
+   "analyze_url": "/analyze?lat=31.801809&lon=-101.985098&lat_ft=10000&r=1"
+  },
+  {
+   "id": "T2-r2c4",
+   "rank": 4,
+   "region": "South",
+   "lat": 31.809045724023743,
+   "lon": -101.98084037536039,
+   "county": "MIDLAND",
+   "tier": "supported",
+   "cum12": {
+    "p10": 122856.80928254941,
+    "p50": 167044.70817102166,
+    "p90": 225715.86870246864
+   },
+   "eur": {
+    "p10": 267609.83920887945,
+    "p50": 385630.7802311596,
+    "p90": 664864.7694859069
+   },
+   "model_offsets": 31,
+   "nearest_model_offset_mi": 0.6527455854971377,
+   "evidence": {
+    "radius_mi": 1.0,
+    "n": 3,
+    "median_cum12": 184588.0,
+    "n_cum12": 3,
+    "median_eur": 500825.0,
+    "n_eur": 3,
+    "nearest": {
+     "api10": "4232941422",
+     "lease": "CMC FENWAY 22/34 F",
+     "well_no": "0034WB",
+     "operator": "CHEVRON U. S. A. INC.",
+     "dist_mi": 0.6527455854971377
+    },
+    "apis": [
+     "4232941422",
+     "4232941655",
+     "4232941623"
+    ]
+   },
+   "gaps": {
+    "multi_well": 4,
+    "other": 32
+   },
+   "analog_eur": {
+    "value": 576774.4974785206,
+    "n": 3
+   },
+   "flags": [],
+   "rationale": {
+    "headline": "Rank #4: 3 nearby offsets within 1 mile, median 12-mo oil 185k bbl, 12-mo oil P50 167k bbl, EUR P50 386k bbl, 4 multi-well gaps excluded.",
+    "details": [
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P10-P90 123k-226k); EUR P50 386k bbl (P10-P90 268k-665k) for a 10,000 ft lateral.",
+     "Nearest offset: CMC FENWAY 22/34 F 0034WB (CHEVRON U. S. A. INC.) at 0.65 mi. Median Arps EUR of the 3 fitted: 501k bbl.",
+     "Wells feeding the model: 31 attributable with an early decline fit within 3 mi (nearest 0.65 mi).",
+     "4 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",
+     "32 other mapped horizontals within 1 mile not used (no completion record yet, gas, or no reported oil).",
+     "Cross-check: distance-weighted EUR per 1,000 ft of 3 fitted offsets x lateral = 577k bbl."
+    ],
+    "why": "Ahead of #5 on 12-mo oil P50 (167,045 vs 167,003 bbl)."
+   },
+   "analyze_url": "/analyze?lat=31.809046&lon=-101.980840&lat_ft=10000&r=1"
+  },
+  {
+   "id": "T2-r0c0",
+   "rank": 5,
+   "region": "South",
+   "lat": 31.80180914480475,
+   "lon": -101.99787115281782,
+   "county": "MIDLAND",
+   "tier": "supported",
+   "cum12": {
+    "p10": 122477.62130577142,
+    "p50": 167002.82486304987,
+    "p90": 240171.1362750046
+   },
+   "eur": {
+    "p10": 256505.0578269791,
+    "p50": 407507.9118353873,
+    "p90": 665997.4425684678
+   },
+   "model_offsets": 18,
+   "nearest_model_offset_mi": 0.5015102433043822,
+   "evidence": {
+    "radius_mi": 1.0,
+    "n": 5,
+    "median_cum12": 144275.0,
+    "n_cum12": 5,
+    "median_eur": 455075.0,
+    "n_eur": 5,
+    "nearest": {
+     "api10": "4232941655",
+     "lease": "CMC FENWAY 22/34 CC",
+     "well_no": "0022WA",
+     "operator": "CHEVRON U. S. A. INC.",
+     "dist_mi": 0.5015102433043822
+    },
+    "apis": [
+     "4232941655",
+     "4232941623",
+     "4232943917",
+     "4232943887",
+     "4232941422"
+    ]
+   },
+   "gaps": {
+    "multi_well": 11,
+    "other": 9
+   },
+   "analog_eur": {
+    "value": 527103.7411818927,
+    "n": 5
+   },
+   "flags": [],
+   "rationale": {
+    "headline": "Rank #5: 5 nearby offsets within 1 mile, median 12-mo oil 144k bbl, 12-mo oil P50 167k bbl, EUR P50 408k bbl, 11 multi-well gaps excluded.",
+    "details": [
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P10-P90 122k-240k); EUR P50 408k bbl (P10-P90 257k-666k) for a 10,000 ft lateral.",
+     "Nearest offset: CMC FENWAY 22/34 CC 0022WA (CHEVRON U. S. A. INC.) at 0.50 mi. Median Arps EUR of the 5 fitted: 455k bbl.",
+     "Wells feeding the model: 18 attributable with an early decline fit within 3 mi (nearest 0.50 mi).",
+     "11 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",
+     "9 other mapped horizontals within 1 mile not used (no completion record yet, gas, or no reported oil).",
+     "Cross-check: distance-weighted EUR per 1,000 ft of 5 fitted offsets x lateral = 527k bbl."
+    ],
+    "why": "Ahead of #6 on 12-mo oil P50 (167,003 vs 166,632 bbl)."
+   },
+   "analyze_url": "/analyze?lat=31.801809&lon=-101.997871&lat_ft=10000&r=1"
+  },
+  {
+   "id": "T2-r0c1",
+   "rank": 6,
+   "region": "South",
+   "lat": 31.80180914480475,
+   "lon": -101.99361345845347,
+   "county": "MIDLAND",
+   "tier": "supported",
+   "cum12": {
+    "p10": 126766.23227325958,
+    "p50": 166631.95685568007,
+    "p90": 233351.14194195735
+   },
+   "eur": {
+    "p10": 251264.64823566072,
+    "p50": 368165.85848441906,
+    "p90": 625102.1214850232
+   },
+   "model_offsets": 21,
+   "nearest_model_offset_mi": 0.4849593389780794,
+   "evidence": {
+    "radius_mi": 1.0,
+    "n": 3,
+    "median_cum12": 184588.0,
+    "n_cum12": 3,
+    "median_eur": 500825.0,
+    "n_eur": 3,
+    "nearest": {
+     "api10": "4232941655",
+     "lease": "CMC FENWAY 22/34 CC",
+     "well_no": "0022WA",
+     "operator": "CHEVRON U. S. A. INC.",
+     "dist_mi": 0.4849593389780794
+    },
+    "apis": [
+     "4232941655",
+     "4232941623",
+     "4232941422"
+    ]
+   },
+   "gaps": {
+    "multi_well": 12,
+    "other": 10
+   },
+   "analog_eur": {
+    "value": 583604.1943231416,
+    "n": 3
+   },
+   "flags": [
+    "gaps_dominate"
+   ],
+   "rationale": {
+    "headline": "Rank #6: 3 nearby offsets within 1 mile, median 12-mo oil 185k bbl, 12-mo oil P50 167k bbl, EUR P50 368k bbl, 12 multi-well gaps excluded.",
+    "details": [
+     "Forecast (same LightGBM model as Analyze): first-12-month oil P50 167k bbl (P10-P90 127k-233k); EUR P50 368k bbl (P10-P90 251k-625k) for a 10,000 ft lateral.",
+     "Nearest offset: CMC FENWAY 22/34 CC 0022WA (CHEVRON U. S. A. INC.) at 0.48 mi. Median Arps EUR of the 3 fitted: 501k bbl.",
+     "Wells feeding the model: 21 attributable with an early decline fit within 3 mi (nearest 0.48 mi).",
+     "12 multi-well-lease horizontals within 1 mile excluded: the RRC reports their production by lease, so no per-well volumes exist and none are assigned.",
+     "10 other mapped horizontals within 1 mile not used (no completion record yet, gas, or no reported oil).",
+     "Cross-check: distance-weighted EUR per 1,000 ft of 3 fitted offsets x lateral = 584k bbl.",
+     "Multi-well-lease horizontals (12) far outnumber attributable offsets (3) within 1 mile: this is mostly pad development, so the public evidence is a thin single-well-lease slice of it."
+    ],
+    "why": "Ahead of #7 on 12-mo oil P50 (166,632 vs 166,616 bbl)."
+   },
+   "analyze_url": "/analyze?lat=31.801809&lon=-101.993613&lat_ft=10000&r=1"
+  }
+ ],
+ "ranked_total": 40,
+ "unranked": {
+  "outside_coverage": 0,
+  "no_model_offsets": 0,
+  "low_confidence_ranked": 0
+ },
+ "tracts": [
+  {
+   "region": "North",
+   "candidates": 20,
+   "ranked": 20,
+   "unranked": 0,
+   "distinct_multi_well_gaps": 49,
+   "best_rank": 10,
+   "best_cum12_p50": 165596.41511163418,
+   "median_cum12_p50": 164197.83491616417,
+   "median_eur_p50": 382438.49578360555,
+   "median_model_offsets": 90.0,
+   "rationale": "#1 North: median 12-mo oil P50 164.2k bbl across 20 ranked locations (best is overall #10 at 165.6k); median EUR P50 382k bbl; median 90 wells feeding the model; 49 multi-well-lease horizontals nearby excluded as coverage gaps."
+  },
+  {
+   "region": "South",
+   "candidates": 20,
+   "ranked": 20,
+   "unranked": 0,
+   "distinct_multi_well_gaps": 27,
+   "best_rank": 1,
+   "best_cum12_p50": 170596.2301170832,
+   "median_cum12_p50": 163659.19221589903,
+   "median_eur_p50": 385467.7086163202,
+   "median_model_offsets": 19.0,
+   "rationale": "#2 South: median 12-mo oil P50 163.7k bbl across 20 ranked locations (best is overall #1 at 170.6k); median EUR P50 385k bbl; median 19 wells feeding the model; 27 multi-well-lease horizontals nearby excluded as coverage gaps."
+  }
+ ],
+ "candidates": {
+  "id": [
+   "T1-r0c0",
+   "T1-r0c1",
+   "T1-r0c2",
+   "T1-r0c3",
+   "T1-r0c4",
+   "T1-r1c0",
+   "T1-r1c1",
+   "T1-r1c2",
+   "T1-r1c3",
+   "T1-r1c4",
+   "T1-r2c0",
+   "T1-r2c1",
+   "T1-r2c2",
+   "T1-r2c3",
+   "T1-r2c4",
+   "T1-r3c0",
+   "T1-r3c1",
+   "T1-r3c2",
+   "T1-r3c3",
+   "T1-r3c4",
+   "T2-r0c0",
+   "T2-r0c1",
+   "T2-r0c2",
+   "T2-r0c3",
+   "T2-r0c4",
+   "T2-r1c0",
+   "T2-r1c1",
+   "T2-r1c2",
+   "T2-r1c3",
+   "T2-r1c4",
+   "T2-r2c0",
+   "T2-r2c1",
+   "T2-r2c2",
+   "T2-r2c3",
+   "T2-r2c4",
+   "T2-r3c0",
+   "T2-r3c1",
+   "T2-r3c2",
+   "T2-r3c3",
+   "T2-r3c4"
+  ],
+  "lat": [
+   31.901809,
+   31.901809,
+   31.901809,
+   31.901809,
+   31.901809,
+   31.905427,
+   31.905427,
+   31.905427,
+   31.905427,
+   31.905427,
+   31.909046,
+   31.909046,
+   31.909046,
+   31.909046,
+   31.909046,
+   31.912664,
+   31.912664,
+   31.912664,
+   31.912664,
+   31.912664,
+   31.801809,
+   31.801809,
+   31.801809,
+   31.801809,
+   31.801809,
+   31.805427,
+   31.805427,
+   31.805427,
+   31.805427,
+   31.805427,
+   31.809046,
+   31.809046,
+   31.809046,
+   31.809046,
+   31.809046,
+   31.812664,
+   31.812664,
+   31.812664,
+   31.812664,
+   31.812664
+  ],
+  "lon": [
+   -102.097869,
+   -102.093607,
+   -102.089344,
+   -102.085082,
+   -102.08082,
+   -102.097869,
+   -102.093607,
+   -102.089344,
+   -102.085082,
+   -102.08082,
+   -102.097869,
+   -102.093607,
+   -102.089344,
+   -102.085082,
+   -102.08082,
+   -102.097869,
+   -102.093607,
+   -102.089344,
+   -102.085082,
+   -102.08082,
+   -101.997871,
+   -101.993613,
+   -101.989356,
+   -101.985098,
+   -101.98084,
+   -101.997871,
+   -101.993613,
+   -101.989356,
+   -101.985098,
+   -101.98084,
+   -101.997871,
+   -101.993613,
+   -101.989356,
+   -101.985098,
+   -101.98084,
+   -101.997871,
+   -101.993613,
+   -101.989356,
+   -101.985098,
+   -101.98084
+  ],
+  "region": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1,
+   1
+  ],
+  "p50": [
+   165060,
+   165596,
+   164567,
+   162753,
+   164063,
+   165060,
+   165060,
+   165060,
+   165337,
+   165014,
+   163699,
+   163964,
+   164332,
+   164915,
+   160796,
+   142966,
+   151862,
+   156172,
+   154270,
+   154181,
+   167003,
+   166632,
+   165994,
+   167422,
+   170596,
+   134962,
+   126648,
+   164065,
+   166616,
+   168525,
+   117317,
+   116425,
+   132461,
+   163254,
+   167045,
+   140809,
+   119226,
+   110061,
+   133577,
+   166035
+  ],
+  "rank": [
+   13,
+   10,
+   18,
+   25,
+   21,
+   15,
+   14,
+   12,
+   11,
+   16,
+   23,
+   22,
+   19,
+   17,
+   26,
+   31,
+   30,
+   27,
+   28,
+   29,
+   5,
+   6,
+   9,
+   3,
+   1,
+   33,
+   36,
+   20,
+   7,
+   2,
+   38,
+   39,
+   35,
+   24,
+   4,
+   32,
+   37,
+   40,
+   34,
+   8
+  ],
+  "status": [
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked",
+   "ranked"
+  ]
+ },
+ "summary": [
+  "The top 6 span 12-mo oil P50 171k to 167k bbl (2% apart). The model's median error on held-out 2022+ wells is 21%, so neighbouring ranks are not meaningfully different: use the list to find areas worth an engineer's look, and the rationales to see why."
+ ],
+ "model": {
+  "cum12_median_ape": 0.2070867952338056,
+  "eur_median_ape": 0.31595091734331904
+ },
+ "data": {
+  "pdq_dump_date": "2026-09-26",
+  "last_complete_month": 202606,
+  "source": "Texas Railroad Commission public data (PDQ dump + well layers)"
+ },
+ "run": {
+  "max_in_flight": 10,
+  "batches": 2,
+  "candidates": 40,
+  "unique_locations": 40,
+  "tile_lookups": 3,
+  "tile_reuses": 37
+ }
+}
