@@ -9,6 +9,7 @@
     "test:ts": "tsx scripts/golden-ts.test.ts"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.2",
     "leaflet": "1.9.4",
     "next": "16.4.3",
     "react": "19.3.1",
