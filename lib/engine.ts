@@ -157,12 +157,15 @@ export const CSV_COLUMNS: [keyof OffsetRow, string][] = [
   ["cluster", "Decline cluster"], ["confidence", "EUR confidence"],
 ];
 
+/** One CSV cell: blank for missing, integers as-is, other numbers to 4 dp, quoted when needed. */
+export function csvCell(v: unknown): string {
+  if (v === null || v === undefined) return "";
+  const s = typeof v === "number" ? (Number.isInteger(v) ? String(v) : v.toFixed(4)) : String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
 export function toCsv(r: Result): string {
-  const esc = (v: unknown) => {
-    if (v === null || v === undefined) return "";
-    const s = typeof v === "number" ? (Number.isInteger(v) ? String(v) : v.toFixed(4)) : String(v);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
+  const esc = csvCell;
   const head = [
     `# OffsetIQ offset report — ${r.target.label}`,
     `# Target lat,lon: ${r.target.lat.toFixed(6)},${r.target.lon.toFixed(6)}; lateral ${Math.round(r.target.lateralFt)} ft; mode ${r.target.mode}`,
