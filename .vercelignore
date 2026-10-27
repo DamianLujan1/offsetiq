@@ -3,3 +3,5 @@
 /tests/
 /.pytest_cache/
 /scripts/find-demo.ts
+/agent/
+/pytest.ini
