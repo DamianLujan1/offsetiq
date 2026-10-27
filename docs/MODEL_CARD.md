@@ -7,7 +7,7 @@ For a proposed or existing horizontal oil well in Midland, Ector, Andrews or Mar
 
 - **cum12**: first-12-month cumulative oil (bbl). This is an *observed* label (wells with at least 12 producing months).
 - **EUR**: Arps-modeled estimated ultimate recovery (bbl). This label is *modeled*: only wells with `eur_confidence == "high"` (at least 24 months of history and fit R² ≥ 0.6) are used.
-- **P10 / P50 / P90** for both: P50 comes from a LightGBM regression in log space, and P10/P90 come from LightGBM quantile models (alpha 0.1 / 0.9).
+- **P90 / P50 / P10** for both, in the PRMS convention (P90 = low case, 90% chance the actual is at least this; P10 = high case). P50 comes from a LightGBM regression in log space. P90 comes from the alpha-0.1 quantile model and P10 from the alpha-0.9 model (stored as `*_p10` / `*_p90` in `model.json`, named by alpha).
 
 ## Data
 - Public **Texas Railroad Commission** data only: the PDQ dump (well completions, lease cycle production) and the county well-layer shapefiles. No wells, APIs or volumes are invented.
@@ -45,7 +45,7 @@ Train on wells with first production before 2022-01. Test on wells with first pr
 | EUR | County median baseline | 1,462 | −0.01 | 30.8% | 43.0% | 43.1% |
 | EUR | Offset average baseline | 1,462 | −0.21 | 37.9% | 56.9% | 34.6% |
 
-Quantile coverage on the holdout: cum12 P10 83.2%, cum12 P90 84.1%, EUR P10 81.7%, EUR P90 86.5%. Each one-sided bound is nominally 90%, so the P10–P90 band is somewhat **narrower than nominal**.
+Quantile coverage on the holdout (share of actuals on the expected side of each bound): cum12 P90 (low) 83.2%, cum12 P10 (high) 84.1%, EUR P90 81.7%, EUR P10 86.5%. Each one-sided bound is nominally 90%, so the P90–P10 range (67–68% of actuals) is somewhat **narrower than nominal**.
 
 Top features by gain (cum12 P50): lateral proxy (48%), longitude (18%), offsets' scaled cum12 (11%).
 

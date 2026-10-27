@@ -10,15 +10,16 @@ const MapView = dynamic(() => import("./MapView"), { ssr: false, loading: () => 
 
 const norm = (s: string) => s.replace(/[^0-9]/g, "");
 
-function Band({ label, b, actual, unit = "bbl" }: { label: string; b: { p10: number; p50: number; p90: number }; actual?: number | null; unit?: string }) {
-  const lo = Math.min(b.p10, actual ?? b.p10) * 0.8, hi = Math.max(b.p90, actual ?? b.p90) * 1.1;
+// PRMS convention: P90 = low case, P10 = high case.
+function Band({ label, b, actual, unit = "bbl" }: { label: string; b: { p90: number; p50: number; p10: number }; actual?: number | null; unit?: string }) {
+  const lo = Math.min(b.p90, actual ?? b.p90) * 0.8, hi = Math.max(b.p10, actual ?? b.p10) * 1.1;
   const X = (v: number) => `${((v - lo) / (hi - lo)) * 100}%`;
   return (
     <div style={{ marginBottom: 10 }}>
       <div className="small mut">{label}</div>
       <div className="big">{fmtK(b.p50)} <span className="small mut">{unit} (P50)</span></div>
-      <div className="bar"><i style={{ left: X(b.p10), width: `calc(${X(b.p90)} - ${X(b.p10)})` }} /><b style={{ left: X(b.p50) }} />{actual != null && <u style={{ left: X(actual) }} title="actual" />}</div>
-      <div className="rng">P10 {fmtK(b.p10)} · P90 {fmtK(b.p90)}{actual != null && <> · <span style={{ color: "var(--good)" }}>actual {fmtK(actual)} ({((b.p50 / actual - 1) * 100).toFixed(0)}% error)</span></>}</div>
+      <div className="bar"><i style={{ left: X(b.p90), width: `calc(${X(b.p10)} - ${X(b.p90)})` }} /><b style={{ left: X(b.p50) }} />{actual != null && <u style={{ left: X(actual) }} title="actual" />}</div>
+      <div className="rng" title="PRMS convention: P90 = low case (90% chance the actual is at least this), P10 = high case">P90 (low) {fmtK(b.p90)} · P10 (high) {fmtK(b.p10)}{actual != null && <> · <span style={{ color: "var(--good)" }}>actual {fmtK(actual)} ({((b.p50 / actual - 1) * 100).toFixed(0)}% error)</span></>}</div>
     </div>
   );
 }
@@ -185,7 +186,7 @@ export default function Analyzer() {
             <button className="btn sm ghost" onClick={() => pickApi("4232944570")}>Backtest: Midland Co. well (out-of-sample)</button>
             <button className="btn sm ghost" onClick={() => pickApi("4231743553")}>Backtest: Martin Co. well, 90+ offsets</button>
             <button className="btn sm ghost" onClick={() => pickApi("4200348372")}>Backtest: Andrews Co. well</button>
-            <button className="btn sm ghost" onClick={() => { const c: number[] = []; for (let i = 0; i < B.W.n; i++) if (B.W.first[i] >= 202201 && B.W.cum12[i] !== null) c.push(i); backtest(c[Math.floor(Math.random() * c.length)]); setMsg("Random 2022+ well — no cherry-picking. Typical holdout error is ~20% (12-mo oil) and ~32% (EUR)."); }}>🎲 Random out-of-sample well</button>
+            <button className="btn sm ghost" onClick={() => { const c: number[] = []; for (let i = 0; i < B.W.n; i++) if (B.W.first[i] >= 202201 && B.W.cum12[i] !== null) c.push(i); backtest(c[Math.floor(Math.random() * c.length)]); setMsg(`Random 2022+ well — no cherry-picking. Typical holdout error is ~${Math.round(B.meta.model.targets.cum12.lightgbm_holdout!.median_ape * 100)}% (12-mo oil) and ~${Math.round(B.meta.model.targets.eur.lightgbm_holdout!.median_ape * 100)}% (EUR).`); }}>🎲 Random out-of-sample well</button>
             <button className="btn sm ghost" onClick={() => setPin(31.86, -102.20)}>Prospect pin: Midland County</button>
           </div></div>}
 
