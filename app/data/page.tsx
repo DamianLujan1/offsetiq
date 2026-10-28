@@ -17,7 +17,7 @@ export default function DataPage() {
   return (
     <main><div className="wrap" style={{ maxWidth: 1050 }}>
       <h1>Data provenance &amp; model card</h1>
-      <p className="mut">Everything in OffsetIQ is computed from Texas Railroad Commission (RRC) public data. No proprietary data, no synthetic wells. Where public data cannot attribute production to a single well, we show the well as a coverage gap instead of guessing.</p>
+      <p className="mut">Everything in OffsetIQ is computed from Texas Railroad Commission (RRC) public data. No proprietary data, no synthetic wells. Where public data reports production only for a whole multi-well lease, we show that lease as one <b>pad</b> with its lease-total production; where production cannot be attributed at all, we show a coverage gap. We never invent a per-well split.</p>
 
       <h2>Sources</h2>
       <div className="card"><ul>
@@ -28,7 +28,12 @@ export default function DataPage() {
       </ul></div>
 
       <h2>Attribution rule (why coverage gaps exist)</h2>
-      <div className="card"><p>Texas reports oil production by <b>lease</b>, not by well. A horizontal is used only when its lease has exactly one well (single-well lease), so lease production = well production. Multi-well leases (common for pad development) are excluded rather than allocated, because any allocation would be invented. This is the main coverage gap and is shown on the map in purple and listed in every report.</p></div>
+      <div className="card"><p>Texas reports oil production by <b>lease</b>, not by well. Three cases:</p>
+        <ul>
+          <li><b>Single-well lease</b> → lease production = well production. These {(meta.horizontals_by_code as Record<string, number>)["Usable: single-well lease, oil production attributable"]?.toLocaleString()} wells are the only ones used to train the model and the only ones used as model features.</li>
+          <li><b>Multi-well horizontal lease (pad)</b> → every completion on the lease is a horizontal, first production 2013 or later. Shown as one pad{meta.pads ? <> ({meta.pads.pads.toLocaleString()} pads covering {meta.pads.wells_in_pads.toLocaleString()} wells; {meta.pads.fitted.toLocaleString()} with an Arps fit)</> : null}: lease-total monthly oil, total lateral = sum of member laterals, Arps fit on the lease stream, centroid of the member laterals. Pads appear in reports and on the map (cyan squares) as offsets labelled “pad (N wells)”, with the well count. <b>No per-well allocation is invented</b>, and pads are not fed into the forecast model.</li>
+          <li><b>Mixed lease</b> (horizontals sharing a lease with vertical or other completions, or pads that started before 2013) → still a coverage gap: lease volumes would mix unrelated wells. Shown on the map in purple and counted in every report.</li>
+        </ul></div>
 
       <h2>Coverage by county (RRC well-layer county)</h2>
       <div className="card" style={{ overflowX: "auto" }}><table>
@@ -66,11 +71,20 @@ export default function DataPage() {
         <p><b>Final models</b> are refit on all wells (cum12 n={String(T.cum12.n_final)}, EUR n={String(T.eur.n_final)}) and used for prospect pins.</p>
       </div>
 
+      <h2 id="wrong">What the model gets wrong</h2>
+      <div className="card"><ul>
+        <li><b>EUR is no better than a county median.</b> On {(T.eur.lightgbm_holdout as Metric).n.toLocaleString()} held-out wells (first production ≥ {ym(meta.model.split_first_prod_ym)}) the EUR model’s median error is {pct((T.eur.lightgbm_holdout as Metric).median_ape)} vs {pct((T.eur.baseline_county_median as Metric).median_ape)} for simply using the county median. EUR labels are themselves Arps extrapolations of short histories, and public data has no completion design. The app therefore shows first-12-month oil as the primary forecast ({pct((T.cum12.lightgbm_holdout as Metric).median_ape)} median error vs {pct((T.cum12.baseline_offset_average as Metric).median_ape)} for an offset average; {pct((T.cum12.lightgbm_holdout as Metric).within_25pct)} within ±25%, n={(T.cum12.lightgbm_holdout as Metric).n.toLocaleString()}) and EUR as secondary context.</li>
+        <li><b>Even the 12-month forecast misses often.</b> About {pct(1 - (T.cum12.lightgbm_holdout as Metric).within_25pct)} of held-out wells land outside ±25%, and the P90–P10 band covers only ~two-thirds of outcomes (see calibration above), not the nominal 80%.</li>
+        <li><b>Multi-well development is shown as pads, not wells.</b> Pads carry lease-level production only; you cannot read a single pad well’s performance from them, and pad volumes are not comparable 1:1 with a single well (compare per 1,000 ft of total lateral). Pads are not used to train or drive the model, so in pad-dominated areas the forecast still rests on the nearby single-well leases.</li>
+        <li><b>Remaining gaps.</b> Mixed leases, permits/DUCs without production records, and wells with no location stay as coverage gaps (counts above).</li>
+        <li><b>Screening, not reserves.</b> Not SEC/PRMS reserves; no economics, gas, water, landing zone, proppant or spacing.</li>
+      </ul></div>
+
       <h2>Limitations — read before using a number</h2>
       <div className="card"><ul>
         <li><b>Not a reserves estimate.</b> Screening and offset-review tool only; not SEC/PRMS reserves and not a substitute for an engineer’s sign-off.</li>
         <li><b>EUR skill is weak.</b> On held-out wells the EUR model is roughly tied with a county median. Treat the 12-month forecast as the primary signal and EUR as context.</li>
-        <li><b>Coverage gaps.</b> Multi-well leases (~half of all horizontals) are excluded; areas developed mostly with pads will have few usable offsets. Each report counts the excluded wells in range.</li>
+        <li><b>Coverage gaps.</b> Pure-horizontal multi-well leases are shown as pads with lease-level production (no per-well split); mixed leases and wells without production records are excluded. Each report lists pads and counts the excluded wells in range.</li>
         <li><b>Public-data lag.</b> RRC production lags 2–3 months and is revised; the newest wells have short histories.</li>
         <li><b>Missing completion design.</b> No proppant, fluid, landing zone or spacing data — lateral length is the only design variable, and it is a surface→bottom-hole proxy.</li>
         <li><b>Oil only.</b> Gas/water forecasts, economics, seismic and SCADA are out of scope.</li>
