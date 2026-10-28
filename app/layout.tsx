@@ -14,6 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <nav className="nav">
           <Link href="/" className="brand">Offset<b>IQ</b></Link>
           <Link href="/analyze" className="l">Analyze</Link>
+          <Link href="/screen" className="l">Screen</Link>
           <Link href="/data" className="l">Data &amp; model</Link>
           <span className="sp" />
           <span className="pill demo" title="Demo build on public RRC data">DEMO</span>

@@ -10,3 +10,5 @@ __pycache__/
 data/processed/*.csv
 !data/processed/early_clusters.csv
 scripts/find-demo.ts
+*.tsbuildinfo
+next-env.d.ts

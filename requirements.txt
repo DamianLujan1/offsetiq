@@ -1,0 +1,6 @@
+# Runtime dependencies of the screening agent (agent/, pipeline/features.py). Vercel installs these for
+# the Python Function in api/screening.py. Local runs use agent/requirements.txt, which adds the dev
+# server and test tools; the offline data pipeline's heavier list is in the README.
+numpy>=2.0
+fastapi>=0.115
+pydantic>=2.7

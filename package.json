@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:ts": "tsx scripts/golden-ts.test.ts"
+    "agent": "python3 -m agent.server",
+    "test:ts": "tsx scripts/golden-ts.test.ts && tsx scripts/screen-golden.ts --check && tsx scripts/screen-hitl.test.ts",
+    "golden:screen": "tsx scripts/screen-golden.ts"
   },
   "dependencies": {
     "leaflet": "1.9.4",

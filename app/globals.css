@@ -44,7 +44,28 @@ label{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.0
 footer{border-top:1px solid var(--line);color:var(--mut);font-size:12px;padding:18px 22px}
 .badge{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700}.b-high{background:#064e3b;color:#6ee7b7}.b-medium{background:#3f3a10;color:#fde68a}.b-low{background:#4c1d1d;color:#fca5a5}.b-none{background:#1f2937;color:#9ca3af}
 .printonly{display:none}
-@media (max-width:900px){.app{grid-template-columns:1fr;height:auto}.main{grid-template-rows:420px auto}.g4,.g3{grid-template-columns:1fr 1fr}.hero h1{font-size:32px}}
+/* ---- Screen mode (agent) ---- */
+textarea{background:#0c1424;border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:8px 10px;font:inherit;font-size:13px;width:100%;resize:vertical;min-height:64px}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.smap{position:absolute;inset:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chip{background:#0c1424;border:1px solid var(--line);color:var(--mut);border-radius:999px;padding:3px 9px;font-size:11px;cursor:pointer;text-align:left}.chip:hover{color:var(--txt);border-color:#3a4d78}
+.own{background:#0f1d18;border:1px solid #1f5141;color:#c7f0de;border-radius:8px;padding:8px 10px;font-size:12px;margin:10px 0;line-height:1.5}
+.trace{list-style:none;margin:8px 0;padding:0}.trace>li{border-left:2px solid #2c3d66;padding:0 0 10px 12px;margin-left:4px;position:relative}
+.trace>li:before{content:"";position:absolute;left:-5px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--acc2)}
+.trace .t{font-weight:600;font-size:13px}.trace .d{font-size:12px;color:#cdd6e6}.trace ul{margin:4px 0 0 14px;padding:0;font-size:12px;color:var(--mut)}.trace .warn ul{color:#fde68a}
+.prog{height:6px;background:#0c1424;border-radius:3px;overflow:hidden;margin:6px 0}.prog i{display:block;height:100%;background:var(--acc2);transition:width .2s}
+.ask{background:#10233a;border:1px solid #2b5c8f;color:#dbeafe;border-radius:8px;padding:10px;font-size:13px;margin:8px 0}
+.appr{background:var(--panel);border:1px solid #2c3d66;border-radius:10px;padding:10px;margin:12px 0 8px}.ok{color:var(--good)}
+td.rat{white-space:normal;min-width:420px;max-width:640px;text-align:left;line-height:1.4}td.rat .w{color:var(--mut);font-size:11px;margin-top:2px}
+tr.excl td{opacity:.45;text-decoration:line-through}tr.excl td.keep,tr.excl td.mv{opacity:1;text-decoration:none}
+.mv button{background:none;border:1px solid var(--line);color:var(--mut);border-radius:4px;padding:0 5px;cursor:pointer;font-size:10px;line-height:16px}.mv button:hover{color:var(--txt)}
+.b-supported{background:#064e3b;color:#6ee7b7}.b-low_confidence{background:#4c1d1d;color:#fca5a5}
+.legend .sw{display:inline-flex;align-items:center;width:auto;height:auto;border-radius:0;margin:0 8px 0 0;white-space:nowrap;vertical-align:baseline}
+.legend .sw i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}.legend .sw i.hollow{border:1px solid #93a1bd}
+.rk span{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#0b1220;border:2px solid #ffc947;color:#ffc947;font:700 11px/1 ui-sans-serif,system-ui,sans-serif}
+.chart.detail{max-height:calc(100% - 20px);overflow:auto}
+.leaflet-tooltip.lbl{background:#0d1526e6;border:1px solid var(--line);color:var(--txt);font-size:11px;padding:1px 6px;box-shadow:none}
+@media (max-width:900px){.nav{gap:14px;padding:12px 16px}.app{grid-template-columns:1fr;height:auto}.main{grid-template-rows:420px auto}.g4,.g3{grid-template-columns:1fr 1fr}.hero h1{font-size:32px}}
 @media print{
   :root{--bg:#fff;--panel:#fff;--panel2:#f3f4f6;--line:#d1d5db;--txt:#111;--mut:#555}
   .nav,.noprint,.leaflet-control-container,.tabs,footer{display:none!important}
@@ -53,4 +74,6 @@ footer{border-top:1px solid var(--line);color:var(--mut);font-size:12px;padding:
   .mapbox{height:380px;break-inside:avoid}.tablebox{overflow:visible}
   th{position:static}td,th{font-size:9px;padding:3px}
   .fc{background:#fff}.para{background:#fff;color:#111}
+  .rep td.rat{min-width:0;max-width:none;font-size:9px}.rep ul{margin:2px 0 2px 14px;padding:0}.rep .w{color:#555}
+  .side{background:#fff}tbody tr:hover td,tr.sel td{background:transparent}
 }
