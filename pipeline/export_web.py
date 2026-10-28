@@ -23,14 +23,16 @@ STATUS_CODES = {
     "multi_well_lease": 1, "no_pdq_completion": 2, "gas_well_out_of_scope": 3,
     "no_oil_production_reported_2012_2026": 4, "first_prod_before_2013": 5,
 }
+PAD_CODE = 7  # multi-well horizontal lease shown as a pad (pipeline/pads.py)
 STATUS_LABELS = [
     "Usable: single-well lease, oil production attributable",
-    "Excluded: multi-well lease (RRC reports production by lease; not allocable to this well)",
+    "Excluded: multi-well lease not shown as a pad (lease also has vertical/non-horizontal completions, pre-2013 production, or no reported oil)",
     "Excluded: no PDQ completion record (permit / DUC / not yet producing / plugged)",
     "Excluded: gas well (out of scope)",
     "Excluded: no oil production reported 2012-2026",
     "Excluded: first production before 2013 (start not observed)",
     "Excluded: RRC well layer has no surface location (lateral cannot be located)",
+    "Pad: multi-well horizontal lease, shown as one pad with lease-level production (no per-well split)",
 ]
 
 
@@ -102,6 +104,44 @@ def main() -> None:
     h.loc[h["api8"].isin(d["api8"]), "code"] = 0
     h.loc[(h["code"] == 0) & ~h["api8"].isin(d["api8"]) & h["surf_lat"].isna(), "code"] = 6
     h.loc[(h["code"] == 0) & ~h["api8"].isin(d["api8"]), "code"] = 4
+
+    # ---- multi-well pads (lease-level aggregates; see pipeline/pads.py) ----
+    pads_csv = os.path.join(PROC, "pads.csv")
+    pads_meta = None
+    if os.path.exists(pads_csv):
+        P = pd.read_csv(pads_csv, dtype={"pad_id": str}).sort_values("pad_id").reset_index(drop=True)
+        PM = pd.read_csv(os.path.join(PROC, "pad_members.csv"), dtype={"pad_id": str, "api8": str, "api10": str, "well_no": str})
+        PMo = pd.read_csv(os.path.join(PROC, "pad_monthly.csv"), dtype={"pad_id": str}).sort_values(["pad_id", "ym"])
+        pid = {k: i for i, k in enumerate(P["pad_id"])}
+        PM = PM[PM["pad_id"].isin(pid)].copy()
+        PM["pad"] = PM["pad_id"].map(pid)
+        PM = PM.sort_values(["pad", "api8"])
+        h.loc[h["api8"].isin(set(PM["api8"])), "code"] = PAD_CODE
+        pads = {
+            "n": len(P), "id": P["pad_id"].tolist(), "lease": P["lease_name"].fillna("").tolist(),
+            "operator": P["operator"].fillna("").tolist(), "field": P["field"].fillna("").tolist(),
+            "county": P["county"].tolist(), "lat": col(P["mid_lat"], 6), "lon": col(P["mid_lon"], 6),
+            "wells": col(P["well_count"]), "lat_ft": col(P["lateral_sum_ft"]), "lat_max": col(P["lateral_max_ft"]),
+            "first": col(P["first_prod_ym"]), "last": col(P["last_ym"]), "months": col(P["months_history"]),
+            "cum_oil": col(P["cum_oil_bbl"]), "cum12": col(P["cum12_oil_bbl"]), "cum24": col(P["cum24_oil_bbl"]),
+            "qi": col(P["qi"], 1), "peak_mop": col(P["peak_mop"]), "Di": col(P["Di_annual"], 4), "b": col(P["b"], 4),
+            "r2": col(P["r_squared"], 4), "eur": col(P["eur_bbl"]),
+            "rem": col(P["remaining_bbl"].where(P["status"].eq("ok"))), "eur_kft": col(P["eur_per_1000ft"], 1),
+            "conf": P["eur_confidence"].tolist(),
+            # member wellbores (for map sticks / report detail); per-well volumes are NOT available
+            "m_pad": PM["pad"].astype(int).tolist(), "m_api10": PM["api10"].tolist(),
+            "m_well_no": PM["well_no"].fillna("").astype(str).str.strip().tolist(),
+            "m_slat": col(PM["surf_lat"], 6), "m_slon": col(PM["surf_lon"], 6),
+            "m_blat": col(PM["bhl_lat"], 6), "m_blon": col(PM["bhl_lon"], 6), "m_lat_ft": col(PM["lateral_proxy_ft"]),
+        }
+        json.dump(pads, open(os.path.join(OUT, "pads.json"), "w"), separators=(",", ":"))
+        pm = {k: {"oil": g["oil_bbl"].astype(int).tolist(), "mop": g["mop"].astype(int).tolist(), "ym": g["ym"].astype(int).tolist()}
+              for k, g in PMo[PMo["pad_id"].isin(pid)].groupby("pad_id")}
+        json.dump(pm, open(os.path.join(OUT, "pads_monthly.json"), "w"), separators=(",", ":"))
+        pads_meta = {"pads": len(P), "wells_in_pads": int(P["well_count"].sum()),
+                     "fitted": int((P["status"] == "ok").sum()),
+                     "conf": P["eur_confidence"].value_counts().to_dict(),
+                     "by_county": {c: {"pads": int(len(g)), "wells": int(g["well_count"].sum())} for c, g in P.groupby("county")}}
     coverage_by_county = {c: {STATUS_LABELS[k]: int(v) for k, v in g["code"].value_counts().sort_index().items()}
                           for c, g in h.groupby("layer_county")}
     allh = {"api10": h["api10"].tolist(), "lat": col(h["mid_lat"], 5), "lon": col(h["mid_lon"], 5),
@@ -129,6 +169,7 @@ def main() -> None:
             "conf": d["eur_confidence"].value_counts().to_dict(),
         },
         "model": metrics,
+        "pads": pads_meta,
         "horizontals_by_code": {STATUS_LABELS[k]: int(v) for k, v in h["code"].value_counts().sort_index().items()},
     }
     json.dump(meta, open(os.path.join(OUT, "meta.json"), "w"), indent=1)

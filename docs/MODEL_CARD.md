@@ -11,7 +11,8 @@ For a proposed or existing horizontal oil well in Midland, Ector, Andrews or Mar
 
 ## Data
 - Public **Texas Railroad Commission** data only: the PDQ dump (well completions, lease cycle production) and the county well-layer shapefiles. No wells, APIs or volumes are invented.
-- Texas reports production by lease, not by well. Only horizontals that are the **only completion on their lease** are kept, so lease production equals well production. Multi-well-lease wells are counted as coverage gaps (`data/processed/coverage.json`) and excluded from DCA and ML.
+- Texas reports production by lease, not by well. Only horizontals that are the **only completion on their lease** are kept, so lease production equals well production. Multi-well-lease wells are excluded from model training and model features.
+- **Pads (display/report only):** a multi-well lease whose completions are *all* horizontals, first producing 2013 or later, is shown as one *pad* (`pipeline/pads.py` → `public/data/pads.json`): lease-total monthly oil, total lateral = sum of member laterals, Arps fit on the lease stream, centroid of the member laterals, well count. Pads appear as offsets labelled "pad (N wells)" in reports, the API and on the map. **No per-well allocation is made.** Mixed leases (horizontals sharing a lease with vertical or other completions) remain coverage gaps (`data/processed/coverage.json`).
 - Lateral length is a **proxy**: the horizontal displacement from SHL to BHL in the RRC well layer. It includes the curve and heel offset and is not a reported perforated interval.
 - Last complete production month in this build: 2026-06. Usable wells by county: Midland 2,060, Martin 1,866, Andrews 669, Ector 121.
 
@@ -49,9 +50,18 @@ Quantile coverage on the holdout (share of actuals on the expected side of each 
 
 Top features by gain (cum12 P50): lateral proxy (48%), longitude (18%), offsets' scaled cum12 (11%).
 
+## Primary vs secondary output
+The app presents **first-12-month oil as the primary forecast**. EUR is shown as a secondary, de-emphasised number labelled "does not beat county median on holdout". The in-app model-card strip and `/data` read these numbers from `public/data/meta.json` (written by `train_model.py`), so they are never hand-typed in the UI.
+
+## What the model gets wrong
+- **EUR ≈ county median.** On 1,462 held-out wells the EUR model's median APE (31.6%) is no better than the county-median baseline (30.8%). We demoted EUR in the UI rather than retraining: the available public fields (location, lateral proxy, vintage, offsets' early production) carry little extra EUR signal beyond what the county median captures, and the EUR labels are themselves Arps extrapolations.
+- **The 12-month forecast still misses often:** ~43% of held-out wells are outside ±25%, and the P90–P10 band covers ~two-thirds of outcomes rather than 80%.
+- **Multi-well development is now shown as pads, not wells.** Pad volumes are lease totals; they are not used to train or drive the model, and you cannot read individual pad-well performance from them.
+- **Screening, not reserves.** Not an SEC/PRMS reserves estimate; no economics, gas or water.
+
 ## Honest limitations
 - The cum12 model clearly beats both baselines. The **EUR model does not reliably beat a county median**: its MAPE and within-25% are slightly worse, though its log R² is higher. Treat the EUR P50 as a rough screen.
 - The EUR labels are themselves Arps forecasts, so their error adds to the model's error.
-- Only single-well-lease horizontals are covered, which biases the sample (many newer multi-well pads are excluded).
+- The model is trained only on single-well-lease horizontals, which biases the sample (newer multi-well pads are shown as lease-level pads but are not training data).
 - The model has no completion design inputs (proppant, fluid, spacing, landing zone), because these are not reliably in the public RRC data used here.
 - Results apply only to the four counties above.

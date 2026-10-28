@@ -77,3 +77,13 @@ tr.excl td{opacity:.45;text-decoration:line-through}tr.excl td.keep,tr.excl td.m
   .rep td.rat{min-width:0;max-width:none;font-size:9px}.rep ul{margin:2px 0 2px 14px;padding:0}.rep .w{color:#555}
   .side{background:#fff}tbody tr:hover td,tr.sel td{background:transparent}
 }
+.padmk{background:#22d3ee;border:1.5px solid #0e7490;border-radius:2px;opacity:.85;box-sizing:border-box}
+.padmk:hover{opacity:1;outline:2px solid #e0f2fe}
+.fc .primary{border-bottom:1px solid #2c3d66;padding-bottom:8px;margin-bottom:10px}
+.fc .primary .big{font-size:38px}
+.fc .secondary{opacity:.72}.fc .secondary .big{font-size:18px;color:#cbd5e1}.fc .secondary .bar b{background:#94a3b8}
+.tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:4px;margin-right:6px}
+.tag.pri{background:#f5a524;color:#111}.tag.sec{background:#334155;color:#cbd5e1}
+.mcard{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;margin:8px 0;background:#0f182b}
+.mcard b{color:var(--acc)}
+tr.pad td{background:#0b2530}

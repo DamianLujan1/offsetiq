@@ -5,38 +5,42 @@
  "coverage": {
   "ANDREWS": {
    "Usable: single-well lease, oil production attributable": 669,
-   "Excluded: multi-well lease (RRC reports production by lease; not allocable to this well)": 990,
+   "Excluded: multi-well lease not shown as a pad (lease also has vertical/non-horizontal completions, pre-2013 production, or no reported oil)": 733,
    "Excluded: no PDQ completion record (permit / DUC / not yet producing / plugged)": 549,
    "Excluded: gas well (out of scope)": 51,
    "Excluded: no oil production reported 2012-2026": 48,
    "Excluded: first production before 2013 (start not observed)": 8,
-   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 17
+   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 17,
+   "Pad: multi-well horizontal lease, shown as one pad with lease-level production (no per-well split)": 257
   },
   "ECTOR": {
    "Usable: single-well lease, oil production attributable": 122,
-   "Excluded: multi-well lease (RRC reports production by lease; not allocable to this well)": 387,
+   "Excluded: multi-well lease not shown as a pad (lease also has vertical/non-horizontal completions, pre-2013 production, or no reported oil)": 297,
    "Excluded: no PDQ completion record (permit / DUC / not yet producing / plugged)": 390,
    "Excluded: gas well (out of scope)": 9,
    "Excluded: no oil production reported 2012-2026": 40,
    "Excluded: first production before 2013 (start not observed)": 7,
-   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 4
+   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 4,
+   "Pad: multi-well horizontal lease, shown as one pad with lease-level production (no per-well split)": 90
   },
   "MARTIN": {
    "Usable: single-well lease, oil production attributable": 1866,
-   "Excluded: multi-well lease (RRC reports production by lease; not allocable to this well)": 4087,
+   "Excluded: multi-well lease not shown as a pad (lease also has vertical/non-horizontal completions, pre-2013 production, or no reported oil)": 765,
    "Excluded: no PDQ completion record (permit / DUC / not yet producing / plugged)": 1272,
    "Excluded: no oil production reported 2012-2026": 202,
    "Excluded: first production before 2013 (start not observed)": 4,
-   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 37
+   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 37,
+   "Pad: multi-well horizontal lease, shown as one pad with lease-level production (no per-well split)": 3322
   },
   "MIDLAND": {
    "Usable: single-well lease, oil production attributable": 2059,
-   "Excluded: multi-well lease (RRC reports production by lease; not allocable to this well)": 4791,
+   "Excluded: multi-well lease not shown as a pad (lease also has vertical/non-horizontal completions, pre-2013 production, or no reported oil)": 1488,
    "Excluded: no PDQ completion record (permit / DUC / not yet producing / plugged)": 1871,
    "Excluded: gas well (out of scope)": 129,
    "Excluded: no oil production reported 2012-2026": 243,
    "Excluded: first production before 2013 (start not observed)": 34,
-   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 69
+   "Excluded: RRC well layer has no surface location (lateral cannot be located)": 69,
+   "Pad: multi-well horizontal lease, shown as one pad with lease-level production (no per-well split)": 3303
   }
  },
  "usable_by_county": {
@@ -357,13 +361,43 @@
    }
   }
  },
+ "pads": {
+  "pads": 1661,
+  "wells_in_pads": 6972,
+  "fitted": 1516,
+  "conf": {
+   "high": 1134,
+   "medium": 345,
+   "none": 145,
+   "low": 37
+  },
+  "by_county": {
+   "ANDREWS": {
+    "pads": 68,
+    "wells": 255
+   },
+   "ECTOR": {
+    "pads": 30,
+    "wells": 83
+   },
+   "MARTIN": {
+    "pads": 832,
+    "wells": 3335
+   },
+   "MIDLAND": {
+    "pads": 731,
+    "wells": 3299
+   }
+  }
+ },
  "horizontals_by_code": {
   "Usable: single-well lease, oil production attributable": 4716,
-  "Excluded: multi-well lease (RRC reports production by lease; not allocable to this well)": 10255,
+  "Excluded: multi-well lease not shown as a pad (lease also has vertical/non-horizontal completions, pre-2013 production, or no reported oil)": 3283,
   "Excluded: no PDQ completion record (permit / DUC / not yet producing / plugged)": 4082,
   "Excluded: gas well (out of scope)": 189,
   "Excluded: no oil production reported 2012-2026": 533,
   "Excluded: first production before 2013 (start not observed)": 53,
-  "Excluded: RRC well layer has no surface location (lateral cannot be located)": 127
+  "Excluded: RRC well layer has no surface location (lateral cannot be located)": 127,
+  "Pad: multi-well horizontal lease, shown as one pad with lease-level production (no per-well split)": 6972
  }
 }

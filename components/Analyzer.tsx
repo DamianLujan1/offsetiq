@@ -1,17 +1,17 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { analyze, CSV_COLUMNS, DEFAULT_VINTAGE, fmtInt, fmtK, fmtYm, summarize, toCsv, type Filters, type OffsetRow, type Target } from "@/lib/engine";
+import React, { useEffect, useMemo, useState } from "react";
+import { analyze, CSV_COLUMNS, DEFAULT_VINTAGE, fmtInt, fmtK, fmtYm, summarize, summaryMeta, toCsv, type Filters, type OffsetRow, type Target } from "@/lib/engine";
 import { loadAll, type Bundle } from "@/lib/load";
-import WellChart from "./WellChart";
+import WellChart, { type Sel } from "./WellChart";
 
 const MapView = dynamic(() => import("./MapView"), { ssr: false, loading: () => <div className="mut" style={{ padding: 20 }}>Loading map…</div> });
 
 const norm = (s: string) => s.replace(/[^0-9]/g, "");
 
 // PRMS convention: P90 = low case, P10 = high case.
-function Band({ label, b, actual, unit = "bbl" }: { label: string; b: { p90: number; p50: number; p10: number }; actual?: number | null; unit?: string }) {
+function Band({ label, b, actual, unit = "bbl" }: { label: React.ReactNode; b: { p90: number; p50: number; p10: number }; actual?: number | null; unit?: string }) {
   const lo = Math.min(b.p90, actual ?? b.p90) * 0.8, hi = Math.max(b.p10, actual ?? b.p10) * 1.1;
   const X = (v: number) => `${((v - lo) / (hi - lo)) * 100}%`;
   return (
@@ -37,7 +37,7 @@ export default function Analyzer() {
   const [minLat, setMinLat] = useState(""); const [maxLat, setMaxLat] = useState(""); const [op, setOp] = useState("");
   const [q, setQ] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
-  const [sel, setSel] = useState<number | null>(null);
+  const [sel, setSel] = useState<Sel | null>(null);
   const [sort, setSort] = useState<{ k: keyof OffsetRow; d: 1 | -1 }>({ k: "dist_mi", d: 1 });
 
   useEffect(() => { loadAll().then(setB).catch((e) => setErr(String(e))); }, []);
@@ -85,6 +85,13 @@ export default function Analyzer() {
       return;
     }
     const h = B.H.api10.indexOf(a);
+    const pk = B.P.m_api10.indexOf(a);
+    if (pk >= 0) {
+      const j = B.P.m_pad[pk];
+      setLateral(Math.round(B.P.m_lat_ft[pk] ?? 10000)); setPin(B.P.lat[j], B.P.lon[j], B.P.m_lat_ft[pk] ?? 10000); setSel({ kind: "pad", idx: j });
+      setMsg(`API ${a} is one of ${B.P.wells[j]} wells on pad ${B.P.lease[j]} (RRC lease ${B.P.id[j]}). RRC reports production for the whole lease, so it is shown as one pad (lease total, no per-well split) and cannot be backtested on its own. Treated as a prospect at the pad centroid.`);
+      return;
+    }
     if (h >= 0 && (B.H.lat[h] == null || B.H.lon[h] == null)) {
       setMsg(`API ${a} is an RRC horizontal, but the RRC well layer has no surface location for it (${B.H.labels[B.H.code[h]]}), so it cannot be placed on the map.`);
       return;
@@ -101,7 +108,7 @@ export default function Analyzer() {
   const res = useMemo(() => {
     if (!B || !target) return null;
     const t = target.mode === "prospect" ? { ...target, lateralFt: lateral } : target;
-    return analyze(B.W, B.H, B.M, t, filters, B.MH);
+    return analyze(B.W, B.H, B.M, t, filters, B.MH, B.P);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [B, target, lateral, radius, minLat, maxLat, op]);
 
@@ -116,16 +123,25 @@ export default function Analyzer() {
     return r;
   }, [res, sort]);
 
-  const offIdx = useMemo(() => (res ? res.offsets.map((o) => o.idx) : []), [res]);
+  const offIdx = useMemo(() => (res ? res.offsets.filter((o) => o.kind === "well").map((o) => o.idx) : []), [res]);
+  const padIdx = useMemo(() => (res ? res.offsets.filter((o) => o.kind === "pad").map((o) => o.idx) : []), [res]);
   const leaseHits = useMemo(() => {
     if (!B || q.length < 3 || tab !== "lease") return [];
     const s = q.toLowerCase(); const out: number[] = [];
     for (let i = 0; i < B.W.n && out.length < 25; i++) if (B.W.lease[i].toLowerCase().includes(s) || B.W.lease_no[i].includes(q)) out.push(i);
     return out;
   }, [B, q, tab]);
+  const padHits = useMemo(() => {
+    if (!B || q.length < 3 || tab !== "lease") return [];
+    const s = q.toLowerCase(); const out: number[] = [];
+    for (let j = 0; j < B.P.n && out.length < 15; j++) if (B.P.lease[j].toLowerCase().includes(s) || B.P.id[j].includes(q)) out.push(j);
+    return out;
+  }, [B, q, tab]);
 
   const meta = B?.meta;
-  const summary = res && meta ? summarize(res, radius, { last_complete_month: meta.last_complete_month, cum12MedApe: meta.model.targets.cum12.lightgbm_holdout!.median_ape, eurMedApe: meta.model.targets.eur.lightgbm_holdout!.median_ape }) : "";
+  const summary = res && meta ? summarize(res, radius, summaryMeta(meta)) : "";
+  const mc = meta ? { c: meta.model.targets.cum12, e: meta.model.targets.eur, split: meta.model.split_first_prod_ym } : null;
+  const P0 = (x: number | undefined) => (x === undefined ? "—" : `${Math.round(x * 100)}%`);
 
   function downloadCsv() {
     if (!res) return;
@@ -165,7 +181,8 @@ export default function Analyzer() {
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. SCHARBAUER, 08-" />
             <div style={{ maxHeight: 180, overflow: "auto", marginTop: 6 }}>
               {leaseHits.map((i) => <div key={i} className="small" style={{ padding: "4px 0", borderBottom: "1px solid var(--line)", cursor: "pointer" }} onClick={() => { backtest(i); }}><b>{B.W.lease[i]} {B.W.well_no[i]}</b> <span className="mut">· {B.W.operator[i]} · {B.W.county[i]} · {B.W.api10[i]}</span></div>)}
-              {q.length >= 3 && !leaseHits.length && <div className="small mut">No attributable single-well lease matches. Multi-well leases are not shown (production not allocable per well).</div>}
+              {padHits.map((j) => <div key={`p${j}`} className="small" style={{ padding: "4px 0", borderBottom: "1px solid var(--line)", cursor: "pointer" }} onClick={() => { setLateral(10000); setPin(B.P.lat[j], B.P.lon[j], 10000); setSel({ kind: "pad", idx: j }); setMsg(`${B.P.lease[j]} is a multi-well pad (${B.P.wells[j]} wells); RRC reports its production for the lease as a whole, so it is shown as one pad and cannot be backtested per well. Pinned at the pad centroid.`); }}><b>{B.P.lease[j]}</b> <span style={{ color: "#22d3ee" }}>pad ({B.P.wells[j]} wells)</span> <span className="mut">· {B.P.operator[j]} · {B.P.county[j]} · {B.P.id[j]}</span></div>)}
+              {q.length >= 3 && !leaseHits.length && !padHits.length && <div className="small mut">No single-well lease or multi-well pad matches. Mixed leases (horizontals sharing a lease with verticals) are not shown — production is not allocable.</div>}
             </div>
           </>)}
           {msg && <div className="warn">{msg}</div>}
@@ -186,18 +203,24 @@ export default function Analyzer() {
             <button className="btn sm ghost" onClick={() => pickApi("4232944570")}>Backtest: Midland Co. well (out-of-sample)</button>
             <button className="btn sm ghost" onClick={() => pickApi("4231743553")}>Backtest: Martin Co. well, 90+ offsets</button>
             <button className="btn sm ghost" onClick={() => pickApi("4200348372")}>Backtest: Andrews Co. well</button>
-            <button className="btn sm ghost" onClick={() => { const c: number[] = []; for (let i = 0; i < B.W.n; i++) if (B.W.first[i] >= 202201 && B.W.cum12[i] !== null) c.push(i); backtest(c[Math.floor(Math.random() * c.length)]); setMsg(`Random 2022+ well — no cherry-picking. Typical holdout error is ~${Math.round(B.meta.model.targets.cum12.lightgbm_holdout!.median_ape * 100)}% (12-mo oil) and ~${Math.round(B.meta.model.targets.eur.lightgbm_holdout!.median_ape * 100)}% (EUR).`); }}>🎲 Random out-of-sample well</button>
+            <button className="btn sm ghost" onClick={() => { const c: number[] = []; for (let i = 0; i < B.W.n; i++) if (B.W.first[i] >= 202201 && B.W.cum12[i] !== null) c.push(i); backtest(c[Math.floor(Math.random() * c.length)]); setMsg(`Random 2022+ well — no cherry-picking. Judge it on first-12-month oil: typical holdout error ~${Math.round(B.meta.model.targets.cum12.lightgbm_holdout!.median_ape * 100)}% (vs ~${Math.round((B.meta.model.targets.cum12.baseline_offset_average?.median_ape ?? NaN) * 100)}% for a naive offset average). EUR is secondary (~${Math.round(B.meta.model.targets.eur.lightgbm_holdout!.median_ape * 100)}% error; does not beat a county median).`); }}>🎲 Random out-of-sample well</button>
             <button className="btn sm ghost" onClick={() => setPin(31.86, -102.20)}>Prospect pin: Midland County</button>
           </div></div>}
 
         {res && (<>
           <div className="fc">
             <div className="small" style={{ marginBottom: 6 }}><b>{res.target.mode === "backtest" ? (res.sample === "out_of_sample" ? "Blind backtest · out-of-sample" : "Backtest · in-sample") : "Forecast"}</b> · {res.target.label}<br /><span className="mut">{res.county || "?"} County · {fmtInt(res.target.lateralFt)} ft · {res.modelOffsets} model offsets ≤ 3 mi{res.target.mode === "backtest" ? ` known before ${fmtYm(res.actual!.first)}` : ""}</span></div>
-            <Band label="First-12-month oil (LightGBM)" b={res.cum12} actual={res.actual?.cum12} />
-            <Band label="Oil EUR (LightGBM, vs Arps-DCA targets)" b={res.eur} actual={res.actual && res.actual.conf !== "none" ? res.actual.eur : undefined} />
-            {res.analogEur && <div className="small">Offset-analog EUR: <b>{fmtK(res.analogEur.value)}</b> bbl <span className="mut">(IDW EUR/1,000 ft of {res.analogEur.n} fitted offsets × lateral)</span></div>}
+            <div className="primary"><Band label={<><span className="tag pri">Primary forecast</span>First-12-month oil (LightGBM)</>} b={res.cum12} actual={res.actual?.cum12} /></div>
+            <div className="secondary">
+              <Band label={<><span className="tag sec">Secondary</span>EUR (secondary · does not beat county median on holdout)</>} b={res.eur} actual={res.actual && res.actual.conf !== "none" ? res.actual.eur : undefined} />
+              {res.analogEur && <div className="small">Offset-analog EUR (secondary): {fmtK(res.analogEur.value)} bbl <span className="mut">(IDW EUR/1,000 ft of {res.analogEur.n} fitted single-well offsets × lateral)</span></div>}
+            </div>
             <div className="small mut" style={{ marginTop: 6 }}>Computed in {res.ms.toFixed(0)} ms in your browser. Screening estimate, not a reserves report.</div>
           </div>
+          {mc && <div className="mcard"><div className="small mut" style={{ textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 2 }}>Model card · holdout (first prod ≥ {fmtYm(mc.split)})</div>
+            12-mo oil: median error <b>{P0(mc.c.lightgbm_holdout?.median_ape)}</b> vs {P0(mc.c.baseline_offset_average?.median_ape)} offset average · {P0(mc.c.lightgbm_holdout?.within_25pct)} within ±25% (n={mc.c.lightgbm_holdout?.n.toLocaleString()}).<br />
+            EUR: {P0(mc.e.lightgbm_holdout?.median_ape)} vs {P0(mc.e.baseline_county_median?.median_ape)} county median — <span style={{ color: "#fca5a5" }}>no better than a county median; use as context only.</span>{" "}
+            <a href="/data#wrong">What the model gets wrong →</a></div>}
           {res.warnings.map((w, i) => <div key={i} className="warn">{w}</div>)}
           {res.excludedNearby.length > 0 && <div className="gap"><b>Coverage gaps within {radius} mi</b> (RRC horizontals present but not used):<ul style={{ margin: "4px 0 0 16px", padding: 0 }}>{res.excludedNearby.map((e) => <li key={e.label}>{e.count} — {e.label.replace(/^Excluded: /, "")}</li>)}</ul></div>}
           <h3 style={{ marginTop: 12 }}>Plain-English read</h3>
@@ -212,18 +235,18 @@ export default function Analyzer() {
       </aside>
       <section className="main">
         <div className="mapbox">
-          <MapView W={B.W} H={B.H} target={res ? { lat: res.target.lat, lon: res.target.lon } : null} radiusMi={radius} offsetIdx={offIdx} selected={sel} onPick={(a, b) => setPin(a, b)} onSelect={(i) => setSel(i)} />
-          {sel !== null && <WellChart W={B.W} idx={sel} onClose={() => setSel(null)} />}
+          <MapView W={B.W} H={B.H} P={B.P} target={res ? { lat: res.target.lat, lon: res.target.lon } : null} radiusMi={radius} offsetIdx={offIdx} padIdx={padIdx} selected={sel} onPick={(a, b) => setPin(a, b)} onSelect={(s) => setSel(s)} />
+          {sel !== null && <WellChart W={B.W} P={B.P} sel={sel} onClose={() => setSel(null)} />}
         </div>
         <div className="tablebox">
           {res ? (<>
-            <div className="toolbar small"><b>{rows.length} offsets</b><span className="mut">within {radius} mi · sorted by {CSV_COLUMNS.find((c) => c[0] === sort.k)?.[1] ?? sort.k} · “—” = not available (insufficient history), always sorted last · click a row for its decline curve</span></div>
+            <div className="toolbar small"><b>{rows.length} offsets</b>{padIdx.length > 0 && <span style={{ color: "#22d3ee" }}>incl. {padIdx.length} multi-well pad{padIdx.length === 1 ? "" : "s"} (lease totals, lateral = sum)</span>}<span className="mut">within {radius} mi · sorted by {CSV_COLUMNS.find((c) => c[0] === sort.k)?.[1] ?? sort.k} · “—” = not available (insufficient history), always sorted last · click a row for its decline curve</span></div>
             <table>
               <thead><tr>{th("lease", "Lease / well", true)}{th("operator", "Operator", true)}{th("api10", "API", true)}{th("dist_mi", "Dist mi")}{th("lateral_ft", "Lat ft")}{th("first_prod", "1st prod")}{th("months", "Mo")}{th("cum_oil", "Cum oil")}{th("cum12", "12-mo")}{th("Di_annual", "Di/yr")}{th("b", "b")}{th("eur", "EUR")}{th("remaining", "Remain")}{th("eur_per_kft", "EUR/kft")}{th("cluster", "Cluster", true)}{th("confidence", "Conf", true)}{th("field", "RRC field", true)}</tr></thead>
               <tbody>{rows.map((o) => (
-                <tr key={o.idx} className={o.idx === sel ? "sel" : ""} onClick={() => setSel(o.idx)}>
-                  <td className="l">{o.lease} {o.well_no}</td><td className="l">{o.operator.slice(0, 26)}</td><td className="l">{o.api10}</td>
-                  <td>{o.dist_mi.toFixed(2)}</td><td>{fmtInt(o.lateral_ft)}</td><td>{fmtYm(o.first_prod)}</td><td>{o.months}</td>
+                <tr key={`${o.kind}${o.idx}`} className={[o.kind === "pad" ? "pad" : "", sel && sel.kind === o.kind && sel.idx === o.idx ? "sel" : ""].join(" ")} onClick={() => setSel({ kind: o.kind, idx: o.idx })}>
+                  <td className="l">{o.lease} {o.kind === "pad" ? <span style={{ color: "#22d3ee" }}>{o.well_no}</span> : o.well_no}</td><td className="l">{o.operator.slice(0, 26)}</td><td className="l">{o.kind === "pad" ? `lease ${o.lease_key}` : o.api10}</td>
+                  <td>{o.dist_mi.toFixed(2)}</td><td title={o.kind === "pad" ? "sum of member laterals" : undefined}>{o.kind === "pad" ? "Σ" : ""}{fmtInt(o.lateral_ft)}</td><td>{fmtYm(o.first_prod)}</td><td>{o.months}</td>
                   <td>{fmtInt(o.cum_oil)}</td><td>{fmtInt(o.cum12)}</td><td>{o.Di_annual?.toFixed(2) ?? "—"}</td><td>{o.b?.toFixed(2) ?? "—"}</td>
                   <td>{fmtInt(o.eur)}</td><td>{fmtInt(o.remaining)}</td><td>{fmtInt(o.eur_per_kft)}</td><td className="l">{o.cluster}</td>
                   <td className="l"><span className={`badge b-${o.confidence}`}>{o.confidence}</span></td><td className="l">{o.field.slice(0, 24)}</td>
