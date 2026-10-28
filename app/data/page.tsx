@@ -45,7 +45,7 @@ export default function DataPage() {
 
       <h2>Model card</h2>
       <div className="card">
-        <p><b>Model:</b> LightGBM gradient-boosted trees (log-space targets), plus quantile models for P10/P90. Params: {Object.entries(meta.model.params).filter(([n]) => n !== "verbose").map(([n, v]) => `${n}=${v}`).join(", ")}.</p>
+        <p><b>Model:</b> LightGBM gradient-boosted trees (log-space targets), plus quantile models for the P90 (low) and P10 (high) cases. P90/P50/P10 follow the PRMS convention: P90 is the value the actual has a 90% chance of reaching or exceeding. Params: {Object.entries(meta.model.params).filter(([n]) => n !== "verbose").map(([n, v]) => `${n}=${v}`).join(", ")}.</p>
         <p><b>Targets:</b> first-12-producing-month oil (cum12) and Arps EUR (EUR trained on high-confidence fits only).</p>
         <p><b>Features ({meta.model.features.length}):</b> {meta.model.features.join(", ")}. Offset features use wells within 3 miles, inverse-distance weighted (1/(d+0.25 mi)²).</p>
         <p><b>Leakage rules:</b> (1) a well is never its own offset; (2) an offset is visible only if its first 12 producing months were complete before the target first produced; (3) offset features use only those early months; (4) the target’s own production is used only as the label. Known mild leakage: the 3 early-decline cluster centroids are fit on all wells.</p>
@@ -61,7 +61,7 @@ export default function DataPage() {
             {row("Baseline: offset average × lateral", T.eur.baseline_offset_average as Metric)}
             {row("Baseline: county median", T.eur.baseline_county_median as Metric)}
           </tbody></table>
-        <p className="small">Quantile calibration on holdout: share of actuals ≥ P10 = {pct(T.cum12_p10.holdout_coverage as number)} (cum12), {pct(T.eur_p10.holdout_coverage as number)} (EUR); share ≤ P90 = {pct(T.cum12_p90.holdout_coverage as number)} (cum12), {pct(T.eur_p90.holdout_coverage as number)} (EUR). The P10–P90 band therefore covers ~67–68% of outcomes, narrower than the nominal 80%.</p>
+        <p className="small">Quantile calibration on holdout: share of actuals ≥ P90 (low case) = {pct(T.cum12_p10.holdout_coverage as number)} (cum12), {pct(T.eur_p10.holdout_coverage as number)} (EUR); share ≤ P10 (high case) = {pct(T.cum12_p90.holdout_coverage as number)} (cum12), {pct(T.eur_p90.holdout_coverage as number)} (EUR). The P90–P10 range therefore covers ~67–68% of outcomes, narrower than the nominal 80%.</p>
         <p className="small"><b>Feature importance (cum12, gain share):</b> {fi.map(([n, v]) => `${n} ${(v * 100).toFixed(0)}%`).join(" · ")}</p>
         <p><b>Final models</b> are refit on all wells (cum12 n={String(T.cum12.n_final)}, EUR n={String(T.eur.n_final)}) and used for prospect pins.</p>
       </div>

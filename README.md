@@ -4,7 +4,7 @@ Offset analysis for Permian operators in **Midland, Ector and Andrews County, TX
 
 - finds public horizontal offsets within a radius, with lateral-length and operator filters;
 - shows Arps decline / EUR / remaining for each offset;
-- forecasts first-12-month oil and EUR (P10/P50/P90) with a LightGBM model trained only on public Texas RRC wells;
+- forecasts first-12-month oil and EUR (P90/P50/P10, PRMS convention: P90 = low case, P10 = high case) with a LightGBM model trained only on public Texas RRC wells;
 - exports the report as CSV or as a printable PDF, and gives a shareable link.
 
 **Data:** Texas Railroad Commission public data only. Wells, APIs and volumes are never invented. Wells whose production can't be attributed to a single well are shown as coverage gaps. See `/data` in the app and `docs/`.

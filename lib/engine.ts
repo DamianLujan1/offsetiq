@@ -21,7 +21,8 @@ export interface OffsetRow {
   cum12: N; qi: N; Di_annual: N; b: N; r2: N; eur: N; remaining: N; eur_per_kft: N;
   cluster: string; confidence: string; status: string;
 }
-export interface Band { p10: number; p50: number; p90: number }
+/** PRMS convention: p90 = low case (90% chance actual >= it), p10 = high case. */
+export interface Band { p90: number; p50: number; p10: number }
 export interface Result {
   target: Target; county: string; countyInferredFromMi: number; inCoverage: boolean;
   offsets: OffsetRow[]; excludedNearby: { label: string; count: number }[]; modelOffsets: number;
@@ -33,7 +34,7 @@ export interface Result {
 
 const band = (lo: number, mid: number, hi: number): Band => {
   const s = [lo, mid, hi].sort((a, b) => a - b);
-  return { p10: s[0], p50: mid < s[0] ? s[0] : mid > s[2] ? s[2] : mid, p90: s[2] };
+  return { p90: s[0], p50: mid < s[0] ? s[0] : mid > s[2] ? s[2] : mid, p10: s[2] };
 };
 
 export function inferCounty(W: Wells, H: Horizontals, lat: number, lon: number) {
@@ -96,6 +97,7 @@ export function analyze(W: Wells, H: Horizontals, Mfinal: ModelBundle, t: Target
   });
   const x = featureVector(feats);
   const p = (k: string) => Math.exp(predictRaw(M[k], x));
+  // Model keys are quantile alphas: "_p10" is the alpha-0.1 (low) model, i.e. the PRMS P90.
   const cum12 = band(p("cum12_p10"), p("cum12"), p("cum12_p90"));
   const eur = band(p("eur_p10"), p("eur"), p("eur_p90"));
   if (feats.n_off < 3) warnings.push(`Only ${feats.n_off} offset(s) with an early decline fit within ${RADIUS_MI} mi${back ? " before this well came online" : ""} — forecast leans on location + lateral length; treat as low confidence.`);
@@ -137,7 +139,7 @@ export function summarize(r: Result, radiusMi: number, meta: { last_complete_mon
   parts.push(`${where}OffsetIQ found ${o.length} public single-well-lease horizontal${o.length === 1 ? "" : "s"} within ${radiusMi} mi${exN ? `, plus ${exN} more horizontal${exN === 1 ? "" : "s"} whose production the RRC reports at lease level or not at all (mostly multi-well leases) — shown on the map as coverage gaps, not used` : ""}.`);
   if (o.length) parts.push(`The nearest is ${o[0].lease} ${o[0].well_no} (${o[0].operator}) at ${o[0].dist_mi.toFixed(2)} mi.`);
   if (fitted.length) parts.push(`${fitted.length} of them have an Arps decline fit, with a median EUR of ${fmtK(med(fitted.map((x) => x.eur as number)))} bbl oil and median ${fmtInt(med(fitted.filter((x) => x.eur_per_kft !== null).map((x) => x.eur_per_kft as number)))} bbl per 1,000 ft of lateral.`);
-  parts.push(`The LightGBM model (trained only on public RRC wells, using offsets known before each well came online) forecasts first-12-month oil of ${fmtK(r.cum12.p50)} bbl (P10–P90 ${fmtK(r.cum12.p10)}–${fmtK(r.cum12.p90)}) and EUR of ${fmtK(r.eur.p50)} bbl (P10–P90 ${fmtK(r.eur.p10)}–${fmtK(r.eur.p90)}).`);
+  parts.push(`The LightGBM model (trained only on public RRC wells, using offsets known before each well came online) forecasts first-12-month oil of ${fmtK(r.cum12.p50)} bbl (P90–P10 ${fmtK(r.cum12.p90)}–${fmtK(r.cum12.p10)}) and EUR of ${fmtK(r.eur.p50)} bbl (P90–P10 ${fmtK(r.eur.p90)}–${fmtK(r.eur.p10)}).`);
   if (r.analogEur) parts.push(`A simple offset-analog (distance-weighted EUR per foot × lateral) gives ${fmtK(r.analogEur.value)} bbl from ${r.analogEur.n} offsets.`);
   if (r.actual) {
     const a12 = r.actual.cum12, ae = r.actual.eur;
@@ -166,8 +168,8 @@ export function toCsv(r: Result): string {
   const head = [
     `# OffsetIQ offset report — ${r.target.label}`,
     `# Target lat,lon: ${r.target.lat.toFixed(6)},${r.target.lon.toFixed(6)}; lateral ${Math.round(r.target.lateralFt)} ft; mode ${r.target.mode}`,
-    `# Forecast cum12 P10/P50/P90 (bbl): ${Math.round(r.cum12.p10)}/${Math.round(r.cum12.p50)}/${Math.round(r.cum12.p90)}`,
-    `# Forecast EUR P10/P50/P90 (bbl): ${Math.round(r.eur.p10)}/${Math.round(r.eur.p50)}/${Math.round(r.eur.p90)}`,
+    `# Forecast cum12 P90/P50/P10 (bbl; PRMS: P90 low case, P10 high case): ${Math.round(r.cum12.p90)}/${Math.round(r.cum12.p50)}/${Math.round(r.cum12.p10)}`,
+    `# Forecast EUR P90/P50/P10 (bbl; PRMS: P90 low case, P10 high case): ${Math.round(r.eur.p90)}/${Math.round(r.eur.p50)}/${Math.round(r.eur.p10)}`,
     `# Source: Texas RRC PDQ dump (production) + RRC well layers. Blank = not available (insufficient history). Not a reserves report.`,
   ];
   const lines = [CSV_COLUMNS.map((c) => c[1]).join(",")];
