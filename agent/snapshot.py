@@ -3,9 +3,10 @@
 The agent never calls the RRC while screening. pipeline/fetch_rrc.py pulls the RRC
 bulk dumps once per data refresh, pipeline/build_dataset.py does the single-well-lease
 attribution, and pipeline/export_web.py freezes the result into public/data/*.json --
-the same files the Analyze page reads. This module loads that snapshot once per
-process and exposes it as numpy arrays, plus the offset pool in exactly the shape
-pipeline.features.offset_features expects (cf. pipeline/train_model.build_pool).
+the same files the Analyze page reads (on Vercel, a copy made by agent/bundle.py).
+This module loads that snapshot once per process and exposes it as numpy arrays, plus
+the offset pool in exactly the shape pipeline.features.offset_features expects
+(cf. pipeline/train_model.build_pool).
 
 Only public data is cached here; nothing about a user's request is.
 """
@@ -18,10 +19,10 @@ from functools import lru_cache
 
 import numpy as np
 
+from agent import bundle
 from agent.forest import Forest
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.environ.get("OFFSETIQ_DATA_DIR", os.path.join(ROOT, "public", "data"))
+DATA_DIR = bundle.data_dir()
 
 
 def _num(a: list) -> np.ndarray:
@@ -69,7 +70,7 @@ def load_snapshot(data_dir: str = DATA_DIR) -> Snapshot:
         with open(os.path.join(data_dir, f)) as fh:
             return json.load(fh)
 
-    W, H, M, meta = j("wells.json"), j("horizontals.json"), j("model.json"), j("meta.json")
+    W, H, M, meta = (j(f) for f in bundle.FILES)
     s = lambda k: np.array(W[k], dtype=object)
     lat_ft, cum12 = _num(W["lat_ft"]), _num(W["cum12"])
     e_di, e_known = _num(W["e_Di"]), _num(W["e_known"])

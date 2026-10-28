@@ -220,18 +220,24 @@ Two Vercel projects deploy from this repository:
 - **`offsetiq`** is the Next.js app, unchanged.
 - **`offsetiq-agent`** is the screening agent: the FastAPI preset at the repository root, with the
   entrypoint `agent.server:app` and its dependencies in `pyproject.toml`. Its Ignored Build Step skips
-  builds unless `agent/`, `pipeline/`, `public/data/` or `pyproject.toml` changed.
+  builds unless `agent/`, `pipeline/`, `public/data/` or `pyproject.toml` changed. Vercel serves
+  `public/` from its CDN and leaves it out of a Python function's bundle, so the build step in
+  `pyproject.toml` (`python -m agent.bundle`) copies the four snapshot files the agent reads into
+  `agent/_snapshot/` (git-ignored), which the agent uses when `public/data/` is absent.
 
 | Project | Variable | Value |
 |---|---|---|
 | `offsetiq-agent` | `OFFSETIQ_AGENT_TOKEN` | Shared secret (sensitive). `/screen` then accepts only callers that send it. |
 | `offsetiq-agent` | `OFFSETIQ_AGENT_WORKERS` | `0`: Vercel functions can't run process pools, so screening runs in-process. |
-| `offsetiq` | `OFFSETIQ_AGENT_URL` | The agent's production URL. |
+| `offsetiq` | `OFFSETIQ_AGENT_URL` | The agent's production domain, `https://offsetiq-agent.vercel.app`. Not a deployment URL: those are behind Vercel Authentication. |
 | `offsetiq` | `OFFSETIQ_AGENT_TOKEN` | The same secret. |
 
 The token is a key between the two services, not user authentication. Without `OFFSETIQ_AGENT_URL`,
-Screen mode reports that it is not connected and Analyze keeps working. `next dev` defaults to
-`http://127.0.0.1:8765`, and a local agent with no token set accepts any caller.
+Screen mode reports that it is not connected and Analyze keeps working. A wrong token or URL shows up
+in Screen mode as an error naming both settings. `next dev` defaults to `http://127.0.0.1:8765`, and a
+local agent with no token set accepts any caller. The app's preview deployments call the production
+agent too, so a change to the agent's request or event format should reach the agent's production
+first.
 
 `GET /health?deep=1` on the agent runs a fixed three-location screen (no user data) and returns its
 P50s. They must equal the values pinned in `tests/test_agent_loop.py`, which shows a deployment

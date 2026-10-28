@@ -14,3 +14,7 @@ dependencies = [
 
 [tool.vercel]
 entrypoint = "agent.server:app"
+
+# Vercel leaves public/ out of the function bundle; copy the snapshot the agent reads next to the code.
+[tool.vercel.scripts]
+build = "python -m agent.bundle"

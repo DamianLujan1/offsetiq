@@ -3,6 +3,7 @@ import asyncio
 import json
 import re
 
+import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
@@ -141,6 +142,20 @@ def test_deep_health_pins_the_numbers_a_deployment_must_reproduce(client):
     h = client.get("/health", params={"deep": 1}).json()
     assert h["ok"] and h["deep"]["ok"]
     assert h["deep"]["cum12_p50"] == pytest.approx([141711.83616015807, 133937.85897050393], rel=1e-9)
+
+
+def test_bundled_snapshot_copy_is_all_the_agent_needs(tmp_path, monkeypatch):
+    from agent import bundle
+    from agent.snapshot import load_snapshot
+    bundle.main(str(tmp_path))                     # the Vercel build step, into a scratch dir
+    copy, live = load_snapshot.__wrapped__(str(tmp_path)), load_snapshot()
+    assert copy.n == live.n and copy.meta == live.meta
+    assert all(np.array_equal(getattr(copy, k), getattr(live, k), equal_nan=True) for k in ("lat", "lon", "cum12", "eur", "h_code"))
+    monkeypatch.delenv("OFFSETIQ_DATA_DIR", raising=False)
+    monkeypatch.setattr(bundle, "PUBLIC", str(tmp_path / "absent"))   # a function bundle has no public/
+    assert bundle.data_dir() == bundle.BUNDLED
+    monkeypatch.setenv("OFFSETIQ_DATA_DIR", str(tmp_path))
+    assert bundle.data_dir() == str(tmp_path)
 
 
 def test_runs_in_process_when_worker_processes_are_unavailable(monkeypatch):
