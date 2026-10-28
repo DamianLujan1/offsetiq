@@ -1,9 +1,7 @@
-# Screening agent service, local runs (python -m agent.server) and tests. Keep the runtime
-# packages in step with pyproject.toml, which is what Vercel installs.
-numpy>=2.0
-fastapi>=0.115
+# Screening agent, local runs (python -m agent.server) and tests: the runtime packages Vercel
+# installs (../requirements.txt) plus the dev server and test tools.
+-r ../requirements.txt
 uvicorn>=0.30
-pydantic>=2.7
 # tests
 pytest>=8.0
 httpx>=0.27

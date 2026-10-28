@@ -3,7 +3,6 @@ import asyncio
 import json
 import re
 
-import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
@@ -98,9 +97,10 @@ def client(monkeypatch):
         yield c
 
 
-def test_server_streams_ndjson(client):
-    assert client.get("/health").json()["ok"] is True
-    with client.stream("POST", "/screen", json={"prompt": "screen this lease block", "context": ONE}) as r:
+@pytest.mark.parametrize("base", ["", "/api/agent"])   # standalone, and as the app's Vercel Function sees it
+def test_server_streams_ndjson(client, base):
+    assert client.get(f"{base}/health").json()["ok"] is True
+    with client.stream("POST", f"{base}/screen", json={"prompt": "screen this lease block", "context": ONE}) as r:
         assert r.status_code == 200 and r.headers["content-type"].startswith("application/x-ndjson")
         assert r.headers["cache-control"] == "no-store"
         evs = [json.loads(line) for line in r.iter_lines() if line]
@@ -111,7 +111,8 @@ def test_server_streams_ndjson(client):
                                   {"prompt": "go", "context": {"polygons": [{"ring": [[1, 2]]}]}},
                                   {"prompt": "go", "context": {"points": [{"lat": "north", "lon": 1}]}}])
 def test_server_rejects_bad_requests(client, body):
-    assert client.post("/screen", json=body).status_code == 422
+    r = client.post("/api/agent/screen", json=body)
+    assert r.status_code == 422 and set(r.json()) == {"error"} and "north" not in r.text   # no echo of the request
 
 
 def test_server_internal_error_ends_stream_with_error_event(client, monkeypatch, caplog):
@@ -126,36 +127,33 @@ def test_server_internal_error_ends_stream_with_error_event(client, monkeypatch,
     assert "RuntimeError" in caplog.text and not re.search(r"secret|31\.9", caplog.text)  # nothing about the request is logged
 
 
-def test_service_token_is_enforced_only_when_configured(client, monkeypatch):
-    body = {"prompt": "screen 31.95,-102.05"}
-    assert client.post("/screen", json=body).status_code == 200            # unset: local development
-    monkeypatch.setenv("OFFSETIQ_AGENT_TOKEN", "s3cret-token")
-    assert client.post("/screen", json=body).status_code == 401
-    assert client.post("/screen", json=body, headers={"authorization": "Bearer wrong"}).status_code == 401
-    assert client.post("/screen", json={"prompt": ""}).status_code == 401   # checked before the body is read
-    ok = client.post("/screen", json=body, headers={"authorization": "Bearer s3cret-token"})
-    assert ok.status_code == 200 and ok.text.strip().splitlines()[-1].startswith('{"type":"proposal"')
-    assert client.get("/health").status_code == 200                         # health stays open
-
-
 def test_deep_health_pins_the_numbers_a_deployment_must_reproduce(client):
-    h = client.get("/health", params={"deep": 1}).json()
+    h = client.get("/api/agent/health", params={"deep": 1}).json()
     assert h["ok"] and h["deep"]["ok"]
     assert h["deep"]["cum12_p50"] == pytest.approx([141711.83616015807, 133937.85897050393], rel=1e-9)
 
 
-def test_bundled_snapshot_copy_is_all_the_agent_needs(tmp_path, monkeypatch):
-    from agent import bundle
-    from agent.snapshot import load_snapshot
-    bundle.main(str(tmp_path))                     # the Vercel build step, into a scratch dir
-    copy, live = load_snapshot.__wrapped__(str(tmp_path)), load_snapshot()
-    assert copy.n == live.n and copy.meta == live.meta
-    assert all(np.array_equal(getattr(copy, k), getattr(live, k), equal_nan=True) for k in ("lat", "lon", "cum12", "eur", "h_code"))
-    monkeypatch.delenv("OFFSETIQ_DATA_DIR", raising=False)
-    monkeypatch.setattr(bundle, "PUBLIC", str(tmp_path / "absent"))   # a function bundle has no public/
-    assert bundle.data_dir() == bundle.BUNDLED
-    monkeypatch.setenv("OFFSETIQ_DATA_DIR", str(tmp_path))
-    assert bundle.data_dir() == str(tmp_path)
+def test_vercel_function_serves_the_agent_and_its_data():
+    import importlib.util
+    import pathlib
+    from agent import server
+    root = pathlib.Path(__file__).resolve().parent.parent
+    spec = importlib.util.spec_from_file_location("screening_function", root / "api" / "screening.py")
+    fn = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fn)
+    assert fn.app is server.app
+    cfg = json.loads((root / "vercel.json").read_text())["functions"]["api/screening.py"]
+    bundled = cfg["includeFiles"].split("{")[1].split("}")[0].split(",")
+    read = re.findall(r'j\("(\w+)\.json"\)', (root / "agent" / "snapshot.py").read_text())
+    assert sorted(bundled) == sorted(read)   # every snapshot file the agent reads ships with the function
+
+
+def test_screens_in_process_on_vercel(monkeypatch):
+    monkeypatch.delenv("OFFSETIQ_AGENT_WORKERS", raising=False)
+    monkeypatch.setenv("VERCEL", "1")
+    assert L.default_workers() == 0
+    monkeypatch.setenv("OFFSETIQ_AGENT_WORKERS", "3")
+    assert L.default_workers() == 3
 
 
 def test_runs_in_process_when_worker_processes_are_unavailable(monkeypatch):

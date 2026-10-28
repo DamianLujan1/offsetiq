@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/screening.py": {
+      "maxDuration": 60,
+      "includeFiles": "public/data/{wells,horizontals,model,meta}.json",
+      "excludeFiles": "{node_modules/**,.next/**}"
+    }
+  }
+}

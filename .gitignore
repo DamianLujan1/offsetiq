@@ -12,4 +12,3 @@ data/processed/*.csv
 scripts/find-demo.ts
 *.tsbuildinfo
 next-env.d.ts
-/agent/_snapshot/

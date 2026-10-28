@@ -1,12 +1,10 @@
 """HTTP front for the screening agent: POST /screen streams the loop's events as NDJSON.
 
 Run:  python -m agent.server [--host 127.0.0.1] [--port 8765]
-The Next.js app proxies /api/screen here (OFFSETIQ_AGENT_URL). When this service is
-reachable from the internet, set OFFSETIQ_AGENT_TOKEN on both sides: /screen then
-requires "Authorization: Bearer <token>", so only the app's proxy can run screens.
-That is a key between two services, not user authentication.
-
-On Vercel (FastAPI preset) the entrypoint is agent.server:app, set in pyproject.toml.
+On Vercel it runs inside the app's own deployment: api/screening.py exposes this app as a
+Python Function and next.config.ts routes /api/agent/* to it. Locally, next.config.ts
+forwards /api/agent/* to this server instead. The routes are served both at / and under
+/api/agent, so the same app works standalone and behind that route.
 
 Privacy: a request is processed in memory and dropped when its stream ends. Nothing
 is stored, and nothing about a request is logged: the access log is off (it would
@@ -16,7 +14,6 @@ never messages or source lines that could carry a prompt or coordinates.
 from __future__ import annotations
 
 import argparse
-import hmac
 import json
 import logging
 import os
@@ -24,8 +21,9 @@ import time
 import traceback
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from agent.loop import default_workers, run, shutdown_pool, worker_pool
@@ -67,19 +65,22 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="OffsetIQ screening agent", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+router = APIRouter()
+
+
+@app.exception_handler(RequestValidationError)
+async def bad_request(_req: Request, _exc: RequestValidationError) -> JSONResponse:
+    # The browser shows {"error"}; the validation details would echo the request back.
+    return JSONResponse({"error": "The request was not understood: the prompt must be 1-2,000 characters, "
+                                  "and each drawn tract needs 3-500 corners (at most 20 tracts and 500 points)."},
+                        status_code=422)
 
 # A fixed request with no user data: two locations in coverage and one outside it. Its numbers are pinned
 # by tests/test_agent_loop.py, so /health?deep=1 shows a deployment computes exactly what the tests expect.
 DEEP_CHECK = "screen 31.86,-102.20 and 32.30,-101.90 and 33.20,-101.20"
 
 
-def require_token(authorization: str | None = Header(default=None)) -> None:
-    token = os.environ.get("OFFSETIQ_AGENT_TOKEN", "")
-    if token and not hmac.compare_digest((authorization or "").encode(), f"Bearer {token}".encode()):
-        raise HTTPException(status_code=401, detail="Missing or invalid service token.")
-
-
-@app.get("/health")
+@router.get("/health")
 async def health(deep: bool = False) -> dict:
     snap = load_snapshot()
     out = {"ok": True, "wells": snap.n, "pdq_dump_date": snap.meta["pdq_dump_date"],
@@ -98,7 +99,7 @@ def _json(o) -> str:
     return json.dumps(o, separators=(",", ":"), default=lambda v: v.item() if hasattr(v, "item") else str(v)) + "\n"
 
 
-@app.post("/screen", dependencies=[Depends(require_token)])
+@router.post("/screen")
 async def screen(req: ScreenRequest) -> StreamingResponse:
     async def events():
         try:
@@ -111,6 +112,10 @@ async def screen(req: ScreenRequest) -> StreamingResponse:
 
     return StreamingResponse(events(), media_type="application/x-ndjson",
                              headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
+
+
+app.include_router(router)
+app.include_router(router, prefix="/api/agent")
 
 
 def main() -> None:

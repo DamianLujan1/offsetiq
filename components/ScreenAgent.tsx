@@ -132,13 +132,15 @@ export default function ScreenAgent() {
     setRunning(true); setSteps([]); setProgress(null); setClarify(null); setError(null); setProposal(null); setReview(null);
     setSelected(null); setMsg(null); setManualLink(null);
     try {
-      const res = await fetch("/api/screen", {
+      // The agent runs in this deployment (api/screening.py); nothing about the request is logged or stored.
+      const res = await fetch("/api/agent/screen", {
         method: "POST", headers: { "content-type": "application/json" }, signal: ctl.signal,
         body: JSON.stringify({ prompt: text.trim(), context: { polygons: polys, points: pinList } }),
       });
-      if (!res.ok || !res.body) {
+      if (!res.ok || !res.body || !(res.headers.get("content-type") ?? "").startsWith("application/x-ndjson")) {
         const j = await res.json().catch(() => null);
-        throw new Error(j?.error ?? `Request failed (${res.status}).`);
+        const hint = process.env.NODE_ENV === "development" ? " Start it with: npm run agent" : " Please retry.";
+        throw new Error(j?.error ?? (res.status >= 500 || res.ok ? `The screening agent is unavailable (HTTP ${res.status}).${hint}` : `Request failed (${res.status}).`));
       }
       const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
       let rest = "";

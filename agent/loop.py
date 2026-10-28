@@ -51,7 +51,10 @@ class TooLarge(Exception):
 # ---- worker pool -----------------------------------------------------------------------------------
 def default_workers() -> int:
     env = os.environ.get("OFFSETIQ_AGENT_WORKERS")
-    return int(env) if env else min(8, os.cpu_count() or 1)
+    if env:
+        return int(env)
+    # A Vercel Function has about one vCPU and no POSIX semaphores: screen in-process there.
+    return 0 if os.environ.get("VERCEL") else min(8, os.cpu_count() or 1)
 
 
 _pool: ProcessPoolExecutor | None = None

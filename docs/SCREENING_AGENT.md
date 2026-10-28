@@ -19,9 +19,9 @@ Nothing is stored. Analyze is unchanged; Screen is a separate tab.
 
 ```
 browser /screen (components/ScreenAgent.tsx, ScreenMap.tsx, lib/screen.ts)
-   │  POST /api/screen {prompt, drawn polygons/points}          NDJSON events, streamed
+   │  POST /api/agent/screen {prompt, drawn polygons/points}    NDJSON events, streamed
    ▼
-app/api/screen/route.ts  ── proxy, logs nothing ──►  agent/server.py (FastAPI, POST /screen)
+api/screening.py (Python Function, same deployment) ──► agent/server.py (FastAPI, logs nothing)
                                                          │
                                 agent/loop.py  run(): parse ─► expand ─► screen ─► rank ─► proposal
                                                  │          │          │          │
@@ -207,7 +207,8 @@ the agent only counts it. `tests/test_agent_coverage_gaps.py` checks three thing
   die with a batch.
 - **No logs.** The agent's access log is off. Failures log the exception type and file:line frames
   only, never messages or source lines that could carry a prompt or coordinates; a test enforces
-  this. The Next.js proxy logs nothing.
+  this. Vercel's request log records each call's path and status; the prompt and drawn shapes
+  travel only in the request body, which it doesn't record.
 - **Share links.** The fragment of a share link is not sent to any server by browsers. Anyone who
   has the link can read it, and the UI says so.
 - **No autonomous action.** The agent never exports, saves or acts. Every export is a browser
@@ -215,34 +216,27 @@ the agent only counts it. `tests/test_agent_coverage_gaps.py` checks three thing
 
 ### Deploying (Vercel)
 
-Two Vercel projects deploy from this repository:
+One Vercel project, `offsetiq`, serves both. The agent is a Python Function in the same
+deployment: `api/screening.py` exposes `agent/server.py`'s app, `next.config.ts` routes
+`/api/agent/*` to it, and the browser calls it on the app's own origin. There is no second service,
+no shared secret and no CORS. A preview deployment runs its own branch's agent, so the app and the
+agent can't drift apart.
 
-- **`offsetiq`** is the Next.js app, unchanged.
-- **`offsetiq-agent`** is the screening agent: the FastAPI preset at the repository root, with the
-  entrypoint `agent.server:app` and its dependencies in `pyproject.toml`. Its Ignored Build Step skips
-  builds unless `agent/`, `pipeline/`, `public/data/` or `pyproject.toml` changed. Vercel serves
-  `public/` from its CDN and leaves it out of a Python function's bundle, so the build step in
-  `pyproject.toml` (`python -m agent.bundle`) copies the four snapshot files the agent reads into
-  `agent/_snapshot/` (git-ignored), which the agent uses when `public/data/` is absent.
+- `requirements.txt` holds the function's dependencies (numpy, FastAPI, pydantic).
+- `vercel.json` sets its time limit (60 s) and bundles the four snapshot files it reads from
+  `public/data/`, which Vercel would otherwise serve only from its CDN.
+- On Vercel the agent screens in-process (`VERCEL` is set: about one vCPU and no process pools).
+  Off Vercel, `OFFSETIQ_AGENT_WORKERS` sets the pool size.
 
-| Project | Variable | Value |
-|---|---|---|
-| `offsetiq-agent` | `OFFSETIQ_AGENT_TOKEN` | Shared secret (sensitive). `/screen` then accepts only callers that send it. |
-| `offsetiq-agent` | `OFFSETIQ_AGENT_WORKERS` | `0`: Vercel functions can't run process pools, so screening runs in-process. |
-| `offsetiq` | `OFFSETIQ_AGENT_URL` | The agent's production domain, `https://offsetiq-agent.vercel.app`. Not a deployment URL: those are behind Vercel Authentication. |
-| `offsetiq` | `OFFSETIQ_AGENT_TOKEN` | The same secret. |
+The trade-off: the Python build is part of the app's build, so a broken agent build fails the
+whole deployment, Analyze included. Preview deployments catch that before merge.
 
-The token is a key between the two services, not user authentication. Without `OFFSETIQ_AGENT_URL`,
-Screen mode reports that it is not connected and Analyze keeps working. A wrong token or URL shows up
-in Screen mode as an error naming both settings. `next dev` defaults to `http://127.0.0.1:8765`, and a
-local agent with no token set accepts any caller. The app's preview deployments call the production
-agent too, so a change to the agent's request or event format should reach the agent's production
-first.
-
-`GET /health?deep=1` on the agent runs a fixed three-location screen (no user data) and returns its
+`GET /api/agent/health?deep=1` runs a fixed three-location screen (no user data) and returns its
 P50s. They must equal the values pinned in `tests/test_agent_loop.py`, which shows a deployment
-computes exactly what the tests do. Elsewhere, the agent runs anywhere `python -m agent.server`
-runs. With several cores it uses worker processes; a full county takes about 1–2 s on 4 cores.
+computes exactly what the tests do. Locally, `next dev` and `next start` forward `/api/agent/*` to
+`python3 -m agent.server` (`OFFSETIQ_AGENT_URL`, default `http://127.0.0.1:8765`). With several
+cores it uses worker processes; a full county takes about 1–2 s on 4 cores, and about 4 s on
+Vercel's single vCPU.
 
 ### Event protocol (NDJSON, one object per line)
 
