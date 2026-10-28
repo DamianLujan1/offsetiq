@@ -4,8 +4,10 @@ import type * as LT from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Horizontals, Wells } from "@/lib/types";
 
-// Keys must match the cluster names written by pipeline/clustering.py.
-const CL: Record<string, string> = { "Steep decline": "#f87171", "Moderate decline": "#f5a524", "Mild decline": "#34d399", "Not fitted": "#64748b" };
+// Keys must match the cluster names written by pipeline/clustering.py; hexes mirror the --steep/--moderate/--mild/--unfit
+// tokens in app/globals.css (canvas markers can't read CSS variables). Red/yellow/blue stays separable under colour-blindness.
+const CL: Record<string, string> = { "Steep decline": "#e34948", "Moderate decline": "#eda100", "Mild decline": "#2a78d6", "Not fitted": "#85847e" };
+const GAP = "#9b9a94", INK = "#111110";
 
 interface Props {
   W: Wells; H: Horizontals; target: { lat: number; lon: number } | null; radiusMi: number;
@@ -31,28 +33,35 @@ export default function MapView({ W, H, target, radiusMi, offsetIdx, selected, o
       L.current = Lf;
       const m = Lf.map(el.current, { preferCanvas: true, zoomControl: true }).setView([32.0, -102.15], 9);
       // Keyless public basemaps only (no Mapbox/Google/CARTO tokens). CARTO now watermarks "API key required", so it is not used.
+      const light = Lf.layerGroup([
+        Lf.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", { attribution: "Basemap © Esri, HERE, Garmin, © OpenStreetMap contributors", maxZoom: 16 }),
+        Lf.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}", { maxZoom: 16 }),
+      ]);
       const dark = Lf.layerGroup([
         Lf.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", { attribution: "Basemap © Esri, HERE, Garmin, © OpenStreetMap contributors", maxZoom: 16 }),
         Lf.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}", { maxZoom: 16 }),
       ]);
       const osm = Lf.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap contributors", maxZoom: 19 });
       const sat = Lf.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { attribution: "Imagery © Esri", maxZoom: 19 });
-      dark.addTo(m);
+      light.addTo(m);
       const rend = Lf.canvas({ padding: 0.5 });
       const gaps = Lf.layerGroup();
       for (let i = 0; i < H.lat.length; i++) {
         if (H.code[i] === 0 || H.lat[i] == null || H.lon[i] == null) continue;
-        Lf.circleMarker([H.lat[i], H.lon[i]], { renderer: rend, radius: 1.6, stroke: false, fillColor: "#a78bfa", fillOpacity: 0.35, interactive: false }).addTo(gaps);
+        Lf.circleMarker([H.lat[i], H.lon[i]], { renderer: rend, radius: 1.6, stroke: false, fillColor: GAP, fillOpacity: 0.4, interactive: false }).addTo(gaps);
       }
       const usable = Lf.layerGroup();
       for (let i = 0; i < W.n; i++) {
-        const c = Lf.circleMarker([W.lat[i], W.lon[i]], { renderer: rend, radius: 2.6, stroke: false, fillColor: CL[W.cluster[i]] ?? "#64748b", fillOpacity: 0.85 });
+        // unfitted wells are hollow rings so they never read as the grey coverage-gap dots
+        const c = W.cluster[i] === "Not fitted"
+          ? Lf.circleMarker([W.lat[i], W.lon[i]], { renderer: rend, radius: 2.4, weight: 1.2, color: CL["Not fitted"], fillColor: "#fff", fillOpacity: 1 })
+          : Lf.circleMarker([W.lat[i], W.lon[i]], { renderer: rend, radius: 2.6, stroke: false, fillColor: CL[W.cluster[i]] ?? CL["Not fitted"], fillOpacity: 0.9 });
         c.on("click", (e) => { Lf.DomEvent.stopPropagation(e); cb.current.onSelect(i); });
         c.bindTooltip(`${W.lease[i]} ${W.well_no[i]} · ${W.operator[i]}`, { direction: "top" });
         c.addTo(usable);
       }
       gaps.addTo(m); usable.addTo(m);
-      Lf.control.layers({ "Dark (Esri)": dark, "Streets (OpenStreetMap)": osm, "Satellite (Esri)": sat }, { "Attributable horizontals (used)": usable, "Coverage gaps (not attributable)": gaps }, { position: "topleft" }).addTo(m);
+      Lf.control.layers({ "Light (Esri)": light, "Dark (Esri)": dark, "Streets (OpenStreetMap)": osm, "Satellite (Esri)": sat }, { "Attributable horizontals (used)": usable, "Coverage gaps (not attributable)": gaps }, { position: "topleft" }).addTo(m);
       dyn.current = Lf.layerGroup().addTo(m);
       m.on("click", (e: LT.LeafletMouseEvent) => cb.current.onPick(e.latlng.lat, e.latlng.lng));
       map.current = m;
@@ -74,12 +83,12 @@ export default function MapView({ W, H, target, radiusMi, offsetIdx, selected, o
     if (!Lf || !m || !g) return;
     g.clearLayers();
     if (!target) return;
-    Lf.circle([target.lat, target.lon], { radius: radiusMi * 1609.344, color: "#f5a524", weight: 1.5, fillOpacity: 0.05, interactive: false }).addTo(g);
+    Lf.circle([target.lat, target.lon], { radius: radiusMi * 1609.344, color: INK, weight: 1.25, dashArray: "4 4", fillColor: INK, fillOpacity: 0.03, interactive: false }).addTo(g);
     for (const i of offsetIdx) {
-      Lf.polyline([[W.slat[i], W.slon[i]], [W.blat[i], W.blon[i]]], { color: CL[W.cluster[i]] ?? "#94a3b8", weight: i === selected ? 4 : 2, opacity: 0.9, interactive: false }).addTo(g);
+      Lf.polyline([[W.slat[i], W.slon[i]], [W.blat[i], W.blon[i]]], { color: CL[W.cluster[i]] ?? CL["Not fitted"], weight: i === selected ? 4 : 2, opacity: 0.9, interactive: false }).addTo(g);
     }
-    if (selected !== null) Lf.circleMarker([W.lat[selected], W.lon[selected]], { radius: 8, color: "#38bdf8", weight: 2, fill: false, interactive: false }).addTo(g);
-    Lf.circleMarker([target.lat, target.lon], { radius: 7, color: "#111", weight: 2, fillColor: "#f5a524", fillOpacity: 1, interactive: false }).addTo(g);
+    if (selected !== null) Lf.circleMarker([W.lat[selected], W.lon[selected]], { radius: 9, color: INK, weight: 1.5, fill: false, interactive: false }).addTo(g);
+    Lf.circleMarker([target.lat, target.lon], { radius: 6, color: "#fff", weight: 2.5, fillColor: INK, fillOpacity: 1, interactive: false }).addTo(g);
   }, [ready, W, target, radiusMi, offsetIdx, selected]);
 
   useEffect(() => {
@@ -93,8 +102,10 @@ export default function MapView({ W, H, target, radiusMi, offsetIdx, selected, o
     <>
       <div id="map" ref={el} />
       <div className="legend noprint">
-        Decline cluster:<span style={{ background: CL["Steep decline"] }} />Steep<span style={{ background: CL["Moderate decline"] }} />Moderate<span style={{ background: CL["Mild decline"] }} />Mild<span style={{ background: CL["Not fitted"] }} />Not fitted
-        <span style={{ background: "#a78bfa" }} />Coverage gap · sticks = SHL→BHL · click map to drop a pin
+        <span className="hint">Decline</span>
+        <span className="cl cl-steep">Steep</span><span className="cl cl-moderate">Moderate</span><span className="cl cl-mild">Mild</span><span className="cl cl-unfit">Not fitted</span>
+        <span className="cl k-gap">Coverage gap</span>
+        <span className="hint">Sticks = SHL→BHL · click the map to drop a pin</span>
       </div>
     </>
   );

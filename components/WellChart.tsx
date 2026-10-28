@@ -16,7 +16,7 @@ export default function WellChart({ W, idx, onClose }: { W: Wells; idx: number; 
       .catch(() => { if (alive) setState("error"); });
     return () => { alive = false; };
   }, [W, idx]);
-  const w = 420, h = 200, pl = 44, pb = 22;
+  const w = 420, h = 180, pl = 44, pb = 22;
   const qi = W.qi[idx], Di = W.Di[idx], b = W.b[idx], pk = W.peak_mop[idx];
   let fit: [number, number][] = [];
   const maxM = s ? Math.max(...s.mop) : 1;
@@ -30,27 +30,34 @@ export default function WellChart({ W, idx, onClose }: { W: Wells; idx: number; 
   const X = (m: number) => pl + ((m - 1) / (horizon - 1)) * (w - pl - 8);
   const Y = (q: number) => 6 + (1 - (Math.log10(Math.max(q, ymin)) - Math.log10(ymin)) / (Math.log10(ymax) - Math.log10(ymin))) * (h - pb - 6);
   const ticks = [100, 1000, 10000, 100000].filter((t) => t <= ymax * 1.01);
+  const stat = (k: string, v: React.ReactNode) => <div><dt>{k}</dt><dd>{v}</dd></div>;
   return (
     <div className="chart">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+      <div className="chart-head">
         <div>
-          <b>{W.lease[idx]} {W.well_no[idx]}</b> <span className="mut small">API {W.api10[idx]}</span>
-          <div className="small mut">{W.operator[idx]} · {W.field[idx]} · {W.county[idx]} · first prod {fmtYm(W.first[idx])} · {fmtInt(W.lat_ft[idx])} ft</div>
+          <div className="chart-title">{W.lease[idx]} {W.well_no[idx]}</div>
+          <div className="small mut">API <span className="mono">{W.api10[idx]}</span> · {W.operator[idx]}</div>
+          <div className="small mut">{W.field[idx]} · {W.county[idx]} · first prod {fmtYm(W.first[idx])} · {fmtInt(W.lat_ft[idx])} ft</div>
         </div>
-        <button className="btn sm ghost" onClick={onClose}>×</button>
+        <button className="icon-btn" onClick={onClose} aria-label="Close decline curve">×</button>
       </div>
-      <svg width={w} height={h} style={{ display: "block", marginTop: 6 }}>
-        {ticks.map((t) => (<g key={t}><line x1={pl} x2={w - 8} y1={Y(t)} y2={Y(t)} stroke="#24314f" /><text x={pl - 4} y={Y(t) + 3} fontSize={10} fill="#93a1bd" textAnchor="end">{t >= 1000 ? `${t / 1000}k` : t}</text></g>))}
-        {[12, 24, 36, 48, 60, 72, 84, 96, 108, 120, 132, 144, 156].filter((m) => m <= horizon).map((m) => <text key={m} x={X(m)} y={h - 6} fontSize={10} fill="#93a1bd" textAnchor="middle">{m}</text>)}
-        {fit.length > 1 && <polyline fill="none" stroke="#f5a524" strokeWidth={2} strokeDasharray={undefined} points={fit.filter((p) => p[0] <= maxM).map((p) => `${X(p[0])},${Y(p[1])}`).join(" ")} />}
-        {fit.length > 1 && <polyline fill="none" stroke="#f5a524" strokeWidth={2} strokeDasharray="4 3" points={fit.filter((p) => p[0] >= maxM).map((p) => `${X(p[0])},${Y(p[1])}`).join(" ")} />}
-        {pts.map((p, i) => <circle key={i} cx={X(p[0])} cy={Y(p[1])} r={2} fill="#38bdf8" />)}
-        {!s && <text x={w / 2} y={h / 2} fill="#93a1bd" textAnchor="middle" fontSize={12}>{state === "loading" ? "loading monthly RRC volumes…" : state === "missing" ? "no monthly RRC volumes for this well" : "could not load monthly RRC volumes"}</text>}
+      <div className="chart-legend">
+        <span><i className="obs" />Reported monthly oil</span><span><i className="fit" />Arps fit</span><span><i className="fc" />Forecast to {ECON_LIMIT} bbl/mo</span>
+      </div>
+      <svg viewBox={`0 0 ${w} ${h}`} role="img" aria-label={`Monthly oil and Arps decline fit for ${W.lease[idx]} ${W.well_no[idx]}`}>
+        {ticks.map((t) => (<g key={t}><line className="grid" x1={pl} x2={w - 8} y1={Y(t)} y2={Y(t)} /><text className="tick" x={pl - 6} y={Y(t) + 3} textAnchor="end">{t >= 1000 ? `${t / 1000}k` : t}</text></g>))}
+        {[12, 24, 36, 48, 60, 72, 84, 96, 108, 120, 132, 144, 156].filter((m) => m <= horizon).map((m) => <text key={m} className="tick" x={X(m)} y={h - 6} textAnchor="middle">{m}</text>)}
+        {fit.length > 1 && <polyline className="fit" points={fit.filter((p) => p[0] <= maxM).map((p) => `${X(p[0])},${Y(p[1])}`).join(" ")} />}
+        {fit.length > 1 && <polyline className="fit" strokeDasharray="4 3" points={fit.filter((p) => p[0] >= maxM).map((p) => `${X(p[0])},${Y(p[1])}`).join(" ")} />}
+        {pts.map((p, i) => <circle key={i} className="obs" cx={X(p[0])} cy={Y(p[1])} r={2} />)}
+        {!s && <text className="msg" x={w / 2} y={h / 2} textAnchor="middle">{state === "loading" ? "Loading monthly RRC volumes…" : state === "missing" ? "No monthly RRC volumes for this well" : "Could not load monthly RRC volumes"}</text>}
       </svg>
-      <div className="small mut">Blue: reported monthly oil (bbl, log scale, x = producing month). Orange: Arps fit; dashed = forecast to {ECON_LIMIT} bbl/mo.</div>
-      <div className="small" style={{ marginTop: 4 }}>
-        Cum {fmtK(W.cum_oil[idx])} · 12-mo {fmtK(W.cum12[idx])} · EUR {fmtK(W.eur[idx])} · remaining {fmtK(W.rem[idx])} · qi {fmtInt(W.qi[idx])} · Di {W.Di[idx]?.toFixed(2) ?? "—"}/yr · b {W.b[idx]?.toFixed(2) ?? "—"} · R² {W.r2[idx]?.toFixed(2) ?? "—"} <span className={`badge b-${W.conf[idx]}`}>{W.conf[idx]}</span>
-      </div>
+      <div className="small mut">bbl/month, log scale · x = producing month</div>
+      <dl className="stats">
+        {stat("Cum oil", fmtK(W.cum_oil[idx]))}{stat("12-mo", fmtK(W.cum12[idx]))}{stat("EUR", fmtK(W.eur[idx]))}{stat("Remaining", fmtK(W.rem[idx]))}
+        {stat("qi", fmtInt(W.qi[idx]))}{stat("Di", `${W.Di[idx]?.toFixed(2) ?? "—"}/yr`)}{stat("b", W.b[idx]?.toFixed(2) ?? "—")}{stat("R²", W.r2[idx]?.toFixed(2) ?? "—")}
+        {stat("Confidence", <span className={`badge b-${W.conf[idx]}`}>{W.conf[idx]}</span>)}
+      </dl>
     </div>
   );
 }
