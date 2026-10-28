@@ -24,3 +24,16 @@ export interface CompactModel { features: string[]; trees: number[][][] }
 export type ModelBundle = Record<string, CompactModel>;
 
 export interface Monthly { [api10: string]: { oil: number[]; mop: number[]; ym: number[] } }
+
+/** Multi-well pads: one record per RRC oil lease whose completions are all horizontals.
+ *  Volumes are LEASE-level (sum of all wells on the pad); there is no per-well allocation. */
+export interface Pads {
+  n: number;
+  id: string[]; lease: string[]; operator: string[]; field: string[]; county: string[];
+  lat: number[]; lon: number[]; wells: number[]; lat_ft: number[]; lat_max: number[];
+  first: number[]; last: number[]; months: number[];
+  cum_oil: number[]; cum12: N[]; cum24: N[];
+  qi: N[]; peak_mop: N[]; Di: N[]; b: N[]; r2: N[]; eur: N[]; rem: N[]; eur_kft: N[]; conf: string[];
+  m_pad: number[]; m_api10: string[]; m_well_no: string[];
+  m_slat: N[]; m_slon: N[]; m_blat: N[]; m_blon: N[]; m_lat_ft: N[];
+}
