@@ -39,6 +39,7 @@ def test_fixture_covers_edge_cases():
     assert any(c["modelOffsets"] == 0 for c in CASES)
     assert any(c["input"]["operator"] for c in CASES) and any(c["input"]["minLatFt"] for c in CASES)
     assert {c["input"]["lateralFt"] for c in CASES} >= {3500, 16000}
+    assert any(c["pads"] for c in CASES) and any(not c["pads"] for c in CASES)
 
 
 @pytest.mark.parametrize("case", CASES, ids=[f"{c['input']['lat']:.3f},{c['input']['lon']:.3f}" for c in CASES])
@@ -63,6 +64,8 @@ def test_location_matches_analyze(snap, case, tiled):
     assert r.model_offsets == case["modelOffsets"]
     assert [snap.api10[j] for j, _ in r.offsets] == [a for a, _ in case["offsets"]]
     assert [d for _, d in r.offsets] == pytest.approx([d for _, d in case["offsets"]], rel=1e-9)
+    assert [snap.p_id[j] for j, _ in r.pads] == [k for k, _ in case["pads"]]
+    assert [d for _, d in r.pads] == pytest.approx([d for _, d in case["pads"]], rel=1e-9)
     assert {snap.h_labels[c]: n for c, n in r.gaps.items()} == dict(case["excludedNearby"])
     if case["analogEur"] is None:
         assert r.analog_eur is None

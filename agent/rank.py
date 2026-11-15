@@ -98,7 +98,9 @@ def evidence(snap: Snapshot, s: Screen) -> dict:
                 "operator": str(snap.operator[i]), "dist_mi": d}
     return {"radius_mi": s.radius_mi, "n": len(s.offsets), "median_cum12": median(c12) if c12 else None,
             "n_cum12": len(c12), "median_eur": median(eur) if eur else None, "n_eur": len(eur), "nearest": near,
-            "apis": [str(snap.api10[i]) for i, _ in s.offsets[:10]]}
+            "apis": [str(snap.api10[i]) for i, _ in s.offsets[:10]],
+            # pads: lease-level production, listed like Analyze; never in the medians above
+            "pads": len(s.pads), "pad_wells": int(sum(int(snap.p_wells[j]) for j, _ in s.pads))}
 
 
 def why_above(r: int, s: Screen, nxt: Screen | None) -> str:
@@ -140,6 +142,8 @@ def rationale(r: int, s: Screen, e: dict, nxt: Screen | None) -> dict:
             else f"no attributable offsets within {miles(s.radius_mi)}")
     if e["median_cum12"] is not None:
         evid += f", median 12-mo oil {kb(e['median_cum12'])} bbl"
+    if e["pads"]:
+        evid += f", {plural(e['pads'], 'multi-well pad')} ({e['pad_wells']} wells, lease-level)"
     headline = (f"Rank #{r}: {evid}, 12-mo oil P50 {kb(s.cum12['p50'])} bbl, EUR P50 {kb(s.eur['p50'])} bbl, "
                 f"{mw} multi-well gap{'' if mw == 1 else 's'} excluded.")
     d = [f"Forecast (same LightGBM model as Analyze): first-12-month oil P50 {kb(s.cum12['p50'])} bbl "

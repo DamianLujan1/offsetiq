@@ -6,11 +6,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { analyze, DEFAULT_VINTAGE, PROSPECT_ASOF, SUPPORTED, type Filters, type Target } from "../lib/engine";
 import { FEATURES, RADIUS_MI } from "../lib/features";
-import type { Horizontals, ModelBundle, Wells } from "../lib/types";
+import type { Horizontals, ModelBundle, Pads, Wells } from "../lib/types";
 
 const OUT = "tests/fixtures/screen_golden.json";
 const load = (f: string) => JSON.parse(readFileSync(`public/data/${f}`, "utf8"));
-const W: Wells = load("wells.json"), H: Horizontals = load("horizontals.json"), M: ModelBundle = load("model.json");
+const W: Wells = load("wells.json"), H: Horizontals = load("horizontals.json"), M: ModelBundle = load("model.json"), P: Pads = load("pads.json");
 
 // Deterministic PRNG (mulberry32) so the case list never changes between runs.
 let seed = 20261027;
@@ -39,13 +39,14 @@ points.push([31.85, -102.45, 10]);          // sparse Ector, widest radius the a
 const cases = points.map(([lat, lon, radius], k) => {
   const f: Filters = { radiusMi: radius ?? radii[k % radii.length], ...filterSets[k % filterSets.length] };
   const t: Target = { lat, lon, lateralFt: laterals[k % laterals.length], vintageYear: DEFAULT_VINTAGE, mode: "prospect", label: `case ${k}` };
-  const r = analyze(W, H, M, t, f);
+  const r = analyze(W, H, M, t, f, undefined, P);
   return {
     input: { lat, lon, lateralFt: t.lateralFt, ...f },
     county: r.county, countyInferredFromMi: r.countyInferredFromMi, inCoverage: r.inCoverage,
     features: FEATURES.map((n) => (Number.isFinite(r.features[n]) ? r.features[n] : null)),
     cum12: lohi(r.cum12), eur: lohi(r.eur), modelOffsets: r.modelOffsets,
-    offsets: r.offsets.map((o) => [o.api10, o.dist_mi]),
+    offsets: r.offsets.filter((o) => o.kind === "well").map((o) => [o.api10, o.dist_mi]),
+    pads: r.offsets.filter((o) => o.kind === "pad").map((o) => [o.lease_key, o.dist_mi]),
     excludedNearby: r.excludedNearby.map((e) => [e.label, e.count]),
     analogEur: r.analogEur, warnings: r.warnings,
   };

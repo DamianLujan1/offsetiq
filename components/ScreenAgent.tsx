@@ -42,7 +42,7 @@ function PrintReport({ rep }: { rep: Report | null }) {
       <div className="small">Request: “{rep.prompt}”</div>
       <div className="small">{rep.plan}</div>
       <div className="small">Approved by the operator {rep.approvedAt.replace("T", " ").slice(0, 16)} UTC · {rep.rows.length} of {rep.proposed} proposed locations kept{rep.edited ? " · order or selection edited by the operator" : ""}</div>
-      <div className="small">Texas RRC public data (PDQ dump {rep.data.pdq_dump_date}; production through {fmtYm(rep.data.last_complete_month)}). P90 = low case, P10 = high case (PRMS). Model median error on held-out 2022+ wells: {Math.round(rep.model.cum12_median_ape * 100)}% (12-mo oil), {Math.round(rep.model.eur_median_ape * 100)}% (EUR). Multi-well-lease wells are counted as coverage gaps, never given volumes. Screening estimate, not a reserves report.</div>
+      <div className="small">Texas RRC public data (PDQ dump {rep.data.pdq_dump_date}; production through {fmtYm(rep.data.last_complete_month)}). P90 = low case, P10 = high case (PRMS). Model median error on held-out 2022+ wells: {Math.round(rep.model.cum12_median_ape * 100)}% (12-mo oil), {Math.round(rep.model.eur_median_ape * 100)}% (EUR). Multi-well horizontal pads are listed with RRC lease-level production (never split per well, never a model input); other multi-well-lease wells are counted as coverage gaps. Screening estimate, not a reserves report.</div>
       <table style={{ marginTop: 8 }}>
         <thead><tr><th>#</th><th className="l">Location</th><th>12-mo oil P90 / P50 / P10</th><th>EUR P50</th><th className="l">Rationale (agent)</th></tr></thead>
         <tbody>{rep.rows.map((r) => (
@@ -354,7 +354,7 @@ export default function ScreenAgent() {
                     <td className="l">{r.region}</td>
                     <td><b>{fmtK(r.cum12.p50)}</b> <span className="mut">({fmtK(r.cum12.p90)}–{fmtK(r.cum12.p10)})</span></td>
                     <td>{fmtK(r.eur.p50)}</td>
-                    <td>{r.evidence.n}{r.evidence.median_cum12 !== null && <div className="mut" style={{ fontSize: 10 }}>median {fmtK(r.evidence.median_cum12)}</div>}</td>
+                    <td>{r.evidence.n}{r.evidence.median_cum12 !== null && <div className="mut" style={{ fontSize: 10 }}>median {fmtK(r.evidence.median_cum12)}</div>}{!!r.evidence.pads && <div className="mut" style={{ fontSize: 10 }} title="Multi-well horizontal pads: RRC lease-level production, not split per well">+{r.evidence.pads} pad{r.evidence.pads === 1 ? "" : "s"} ({r.evidence.pad_wells} wells)</div>}</td>
                     <td>{r.model_offsets}</td><td>{r.gaps.multi_well}</td>
                     <td className="l"><span className={`badge b-${r.tier}`}>{TIER[r.tier]}</span></td>
                     <td className="rat">{r.rationale.headline}<div className="w">{r.rationale.why}</div></td>

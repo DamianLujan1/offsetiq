@@ -59,6 +59,16 @@ class Snapshot:
     h_code: np.ndarray
     h_county: np.ndarray
     h_labels: list
+    # multi-well horizontal pads (pads.json): lease-level production, one record per RRC lease.
+    # Listed as evidence like the Analyze page; never a model feature, never split per well.
+    p_id: np.ndarray
+    p_lease: np.ndarray
+    p_operator: np.ndarray
+    p_lat: np.ndarray
+    p_lon: np.ndarray
+    p_wells: np.ndarray
+    p_lat_max: np.ndarray      # longest member lateral (the per-well lateral filter uses it, as in analyze())
+    p_first: np.ndarray
     forest: Forest
     meta: dict
 
@@ -69,7 +79,8 @@ def load_snapshot(data_dir: str = DATA_DIR) -> Snapshot:
         with open(os.path.join(data_dir, f)) as fh:
             return json.load(fh)
 
-    W, H, M, meta = j("wells.json"), j("horizontals.json"), j("model.json"), j("meta.json")   # vercel.json bundles these
+    W, H, M, meta, P = (j("wells.json"), j("horizontals.json"), j("model.json"), j("meta.json"),
+                        j("pads.json"))   # vercel.json bundles these
     s = lambda k: np.array(W[k], dtype=object)
     lat_ft, cum12 = _num(W["lat_ft"]), _num(W["cum12"])
     e_di, e_known = _num(W["e_Di"]), _num(W["e_known"])
@@ -92,5 +103,9 @@ def load_snapshot(data_dir: str = DATA_DIR) -> Snapshot:
         eur_kft=_num(W["eur_kft"]), conf=s("conf"), pool_idx=pool_idx, pool=pool,
         h_lat=_num(H["lat"]), h_lon=_num(H["lon"]), h_code=np.array(H["code"], dtype=np.int64),
         h_county=np.array(H["county"], dtype=object), h_labels=list(H["labels"]),
+        p_id=np.array(P["id"], dtype=object), p_lease=np.array(P["lease"], dtype=object),
+        p_operator=np.array(P["operator"], dtype=object), p_lat=_num(P["lat"]), p_lon=_num(P["lon"]),
+        p_wells=np.array(P["wells"], dtype=np.int64), p_lat_max=_num(P["lat_max"]),
+        p_first=np.array(P["first"], dtype=np.int64),
         forest=Forest(M), meta=meta,
     )
