@@ -11,7 +11,8 @@ export interface Row {
   id: string; rank: number; region: string; lat: number; lon: number; county: string;
   tier: "supported" | "low_confidence"; cum12: Band; eur: Band; model_offsets: number; nearest_model_offset_mi: number | null;
   evidence: { radius_mi: number; n: number; median_cum12: number | null; n_cum12: number; median_eur: number | null; n_eur: number;
-    nearest: { api10: string; lease: string; well_no: string; operator: string; dist_mi: number } | null; apis: string[] };
+    nearest: { api10: string; lease: string; well_no: string; operator: string; dist_mi: number } | null; apis: string[];
+    pads?: number; pad_wells?: number };
   gaps: { multi_well: number; other: number }; analog_eur: { value: number; n: number } | null; flags: string[];
   rationale: Rationale; analyze_url: string;
 }

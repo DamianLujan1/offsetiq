@@ -3,7 +3,7 @@
   "functions": {
     "api/screening.py": {
       "maxDuration": 60,
-      "includeFiles": "public/data/{wells,horizontals,model,meta}.json",
+      "includeFiles": "public/data/{wells,horizontals,model,meta,pads}.json",
       "excludeFiles": "{node_modules/**,.next/**}"
     }
   }

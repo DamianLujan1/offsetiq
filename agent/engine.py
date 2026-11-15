@@ -6,9 +6,10 @@ Analyze page (tests/test_agent_parity.py checks this against analyze() output).
 The model features are computed by pipeline/features.offset_features -- the single
 definition training uses -- not by a port of it.
 
-Never invents volumes: wells on multi-well leases (RRC reports their production at
-lease level) are only ever counted, as coverage gaps. Their volumes are never
-read, and they never feed a feature, a median or a forecast.
+Never invents volumes: RRC reports multi-well-lease production only at lease level.
+All-horizontal multi-well leases are listed as pads (lease totals, no per-well split),
+exactly like the Analyze page; other multi-well-lease wells are counted as coverage
+gaps. Neither ever feeds a feature, a median or a forecast.
 """
 from __future__ import annotations
 
@@ -29,6 +30,7 @@ COVERAGE_MI = 5.0             # nearest mapped horizontal farther than this = ou
 LOW_OFFSETS = 3               # fewer model offsets than this = low-confidence forecast
 LATERAL_RANGE_FT = (4000.0, 15000.0)
 MULTI_WELL = 1                # horizontals.json code: multi-well lease, production not allocable
+PAD_CODE = 7                  # horizontals.json code: member of a pad (listed via pads, not a gap)
 
 
 @dataclass(frozen=True)
@@ -109,6 +111,7 @@ class Screen:
     analog_eur: dict | None
     flags: list = field(default_factory=list)
     multi_well: tuple = ()      # indices of multi-well-lease horizontals within radius_mi (counted, never valued)
+    pads: list = field(default_factory=list)  # [(pad index, distance mi)] within radius_mi, nearest first
 
 
 def _band(lo: float, mid: float, hi: float) -> dict:
@@ -160,8 +163,28 @@ def screen_location(snap: Snapshot, lat: float, lon: float, lateral_ft: float, r
     order = np.argsort(dw[m], kind="stable")
     offsets = [(int(i), float(d)) for i, d in zip(w[m][order], dw[m][order])]
 
+    # Pads within radius, same filters as analyze() (lateral filters use the longest member).
+    dp = haversine_mi(lat, lon, snap.p_lat, snap.p_lon)
+    pm = dp <= radius_mi
+    if flt.min_lat_ft is not None:
+        pm &= snap.p_lat_max >= flt.min_lat_ft
+    if flt.max_lat_ft is not None:
+        pm &= snap.p_lat_max <= flt.max_lat_ft
+    if flt.operator:
+        op = flt.operator.lower()
+        pm &= np.array([op in o.lower() for o in snap.p_operator], dtype=bool)
+    if flt.min_first_ym is not None:
+        pm &= snap.p_first >= flt.min_first_ym
+    if flt.max_first_ym is not None:
+        pm &= snap.p_first <= flt.max_first_ym
+    pidx = np.flatnonzero(pm)
+    porder = np.argsort(dp[pidx], kind="stable")
+    pads = [(int(i), float(dp[i])) for i in pidx[porder]]
+
     # Coverage gaps: mapped horizontals in range whose production is not attributable. Counted only.
-    gm = (dh <= radius_mi) & (snap.h_code[tile.h] != 0)
+    # Pad members are not gaps: their lease-level production is listed above (analyze() skips PAD_CODE too).
+    hc = snap.h_code[tile.h]
+    gm = (dh <= radius_mi) & (hc != 0) & (hc != PAD_CODE)
     codes, counts = np.unique(snap.h_code[tile.h][gm], return_counts=True)
     gaps = {int(c): int(k) for c, k in zip(codes, counts)}
     multi_well = tuple(int(h) for h in tile.h[gm & (snap.h_code[tile.h] == MULTI_WELL)])
@@ -189,4 +212,5 @@ def screen_location(snap: Snapshot, lat: float, lon: float, lateral_ft: float, r
         county=county, county_dist_mi=cdist, in_coverage=bool(in_cov), features=f,
         cum12=_band(p["cum12_p10"], p["cum12"], p["cum12_p90"]), eur=_band(p["eur_p10"], p["eur"], p["eur_p90"]),
         model_offsets=n_off, offsets=offsets, gaps=gaps, analog_eur=analog, flags=flags, multi_well=multi_well,
+        pads=pads,
     )
